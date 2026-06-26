@@ -1,0 +1,21 @@
+module.exports = {
+  apps: [
+    {
+      name: "itembank-online",
+      script: "frankenphp",
+      args: "run --config Caddyfile",
+      interpreter: "none", // ini bukan script Node/PHP biasa, tapi binary
+      autorestart: true,
+      watch: false,
+      max_memory_restart: "1G",
+      error_file: "writable/logs/frankenphp-error.log",
+      out_file: "writable/logs/frankenphp-out.log",
+      env: {
+        CI_ENVIRONMENT: "development",
+      },
+      env_production: {
+        CI_ENVIRONMENT: "production",
+      },
+    },
+  ],
+};

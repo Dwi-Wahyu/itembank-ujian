@@ -80,3 +80,5 @@ _modules/
 contexts/
 
 Caddyfile
+
+ecosystem.config.js
