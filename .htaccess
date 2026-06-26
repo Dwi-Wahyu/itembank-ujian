@@ -1,0 +1,8 @@
+Options -Indexes
+DirectoryIndex index.php
+
+RewriteEngine On
+
+# kalau URL belum bermula /public, lempar ke /public
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteRule ^(.*)$ public/$1 [L]

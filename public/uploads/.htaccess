@@ -1,0 +1,10 @@
+# Matikan eksekusi PHP di folder upload
+php_flag engine off
+
+# Cegah directory listing
+Options -Indexes
+
+# Tolak file PHP langsung
+<FilesMatch "\.(php|php[0-9]|phtml)$">
+    Deny from all
+</FilesMatch>

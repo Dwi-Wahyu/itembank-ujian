@@ -1,0 +1,12 @@
+{
+  "name": "Panel Pengawas OSCE",
+  "short_name": "OSCE Panel",
+  "start_url": "/osce/panel",
+  "display": "standalone",
+  "background_color": "#f6f8fa",
+  "theme_color": "#0EA5A5",
+  "icons": [
+    { "src": "/assets/icons/osce-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/icons/osce-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

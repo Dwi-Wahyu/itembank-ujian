@@ -1,0 +1,82 @@
+#---------------------------------------------------------
+# Operating System Specific Files
+#---------------------------------------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+*~
+.directory
+.Trash-*
+
+#---------------------------------------------------------
+# Environment & Sensitive Files (CRITICAL)
+#---------------------------------------------------------
+.env
+.env.*
+!.env.example
+.vagrant
+Vagrantfile
+
+#---------------------------------------------------------
+# Temporary & Writable Files (Global Pattern)
+#---------------------------------------------------------
+# Menggunakan **/ agar mencakup 'writable/' maupun 'public/writable/'
+**/writable/cache/*
+**/writable/logs/*
+**/writable/session/*
+**/writable/debugbar/*
+**/writable/uploads/*
+**/writable/temp/*
+
+# Jangan abaikan file placeholder agar struktur folder tetap ada di Git
+!**/writable/**/index.html
+!**/writable/**/.htaccess
+
+# File log PHP umum
+php_errors.log
+
+#---------------------------------------------------------
+# Composer & Dependencies
+#---------------------------------------------------------
+vendor/
+
+#---------------------------------------------------------
+# IDE & Development Tools
+#---------------------------------------------------------
+.idea/
+*.iml
+.vscode/
+/nbproject/
+/build/
+/dist/
+.php-version
+.phpintel
+*.sublime-workspace
+*.sublime-project
+
+#---------------------------------------------------------
+# Testing & Documentation
+#---------------------------------------------------------
+tests/coverage*
+phpunit
+/results/
+/phpunit*.xml
+user_guide_src/build/*
+
+#---------------------------------------------------------
+# Project Specific
+#---------------------------------------------------------
+_modules/
+contexts/
+
+Caddyfile
