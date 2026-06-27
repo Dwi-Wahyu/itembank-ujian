@@ -79,6 +79,7 @@ class Filters extends BaseFilters
         'csrf' => [
             'except' => [
                 'admin/login',
+                'teori/login',
                 'api/*'
             ]
         ],
