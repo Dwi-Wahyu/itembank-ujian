@@ -21,15 +21,47 @@ class UjianController extends BaseController
         $this->managementUrl = env('MANAGEMENT_API_URL'); 
     }
 
-    public function teoriDetail($id)
-    {
-        $ujian = $this->db->table('buat_teori')->where('id', $id)->get()->getRowArray();
+    // public function teoriDetail($id)
+    // {
+    //     $ujian = $this->db->table('buat_teori')->where('id', $id)->get()->getRowArray();
         
-        if (!$ujian) {
-            $ujian = ['id' => $id, 'kode' => '', 'nama' => 'Sesi belum disinkronkan'];
+    //     if (!$ujian) {
+    //         $ujian = ['id' => $id, 'kode' => '', 'nama' => 'Sesi belum disinkronkan'];
+    //     }
+
+    //     return view('Modules\Admin\Views\ujian\teori_detail', ['ujian' => $ujian]);
+    // }
+
+    public function teoriDetail(int $id)
+    {
+        $db = $this->db;
+
+        $uji = $db->table('buat_teori')->where('id', $id)->get()->getRowArray();
+        if (!$uji) {
+            return redirect()->to(site_url('admin/ujian/teori'))->with('error','Data tidak ditemukan');
         }
 
-        return view('Modules\Admin\Views\ujian\teori_detail', ['ujian' => $ujian]);
+        // join referensi (opsional)
+        $dep = null;
+        if (!empty($uji['dapertemen_id'])) {
+            $dep = $db->table('departemen')->select('nama')->where('id', $uji['dapertemen_id'])->get()->getRowArray();
+        }
+        $blok = null;
+        if (!empty($uji['blok'])) {
+            $blok = $db->table('blok')->select('nama')->where('id', $uji['blok'])->get()->getRowArray();
+        }
+
+        // hitung peserta
+        $jml = $db->table('admin_cbt')->where('kode', $uji['kode'])->countAllResults();
+
+        return view('\Modules\Admin\Views\ujian\teori_detail', [
+            'title'      => $uji['nama'],
+            'menuActive' => 'ujian_teori',
+            'uji'        => $uji,
+            'dep'        => $dep['nama'] ?? 'Semua Departemen',
+            'blok'       => $blok['nama'] ?? 'Semua Blok',
+            'jumlah'     => $jml,
+        ]);
     }
 
     // 2. API: Get Live Student Status for the Room Investigator

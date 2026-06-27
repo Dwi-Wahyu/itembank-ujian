@@ -1,51 +1,278 @@
-<?= $this->extend('Modules\Admin\Views\layouts\admin') ?>
+<?php $this->extend('\Modules\Admin\Views\layouts\admin'); ?>
+<?php $this->section('content');
+$min = (int)($uji['nilai_minimum'] ?? $uji['nilai_minimum'] ?? 0);
+ ?>
+<style>
+  /* baris merah full + teks putih */
+  .table .row-red > * {
+    background-color: #dc3545 !important; /* merah */
+    color: #fff !important;               /* teks putih */
+    border-color: rgba(0,0,0,.1) !important; /* biar border tetap terlihat */
+  }
 
-<?= $this->section('content') ?>
-<div class="container-fluid py-4">
-    <h3 class="mb-3">Live Exam Proctoring</h3>
+  /* saat hover di table-hover */
+  .table.table-hover .row-red:hover > * {
+    background-color: #bb2d3b !important; /* sedikit lebih gelap saat hover */
+    color: #fff !important;
+  }
 
-    <div class="card mb-4 border-primary shadow-sm">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0 text-white"><i class="fa fa-cloud-download"></i> Offline Server Synchronization</h5>
-            <span class="badge bg-light text-primary">Air-Gapped Mode</span>
-        </div>
-        <div class="card-body d-flex gap-3">
+  /* ikon/link/tombol di dalam baris merah tetap putih */
+  .table .row-red a,
+  .table .row-red i {
+    color: #fff !important;
+  }
+  .table .row-red .btn {
+    color: #dc3545 !important;            /* tombol light tetap kontras */
+    background-color: #fff !important;
+    border-color: #fff !important;
+  }
+</style>
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="<?= site_url('admin/dashboard') ?>">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="<?= site_url('admin/ujian/teori') ?>">Ujian Teori</a></li>
+      <li class="breadcrumb-item active" aria-current="page"><?= esc($uji['nama'])." - ".esc($uji['kode']) ?></li>
+    </ol>
+  </nav>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body p-0">
+    <div class="card-body d-flex gap-3">
             <button id="btn-push-results" class="btn btn-warning px-4">
                 <i class="fa fa-upload"></i> Push Final Grades to VPS
             </button>
         </div>
-    </div>
 
-    <div class="card shadow-sm">
-        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0 text-white"><i class="fa fa-users"></i> Room Investigator Dashboard</h5>
-            <button onclick="reloadProctorGrid()" class="btn btn-sm btn-outline-light">
-                <i class="fa fa-refresh"></i> Refresh Status
-            </button>
-        </div>
-        <div class="card-body table-responsive">
-            <table class="table table-hover table-bordered" id="proctor-table">
-                <thead class="bg-light">
-                    <tr>
-                        <th>No Ujian</th>
-                        <th>Mahasiswa</th>
-                        <th class="text-center">Status</th>
-                        <th class="text-center">Time Remaining</th>
-                        <th class="text-center">Violations (Max 3)</th>
-                        <th class="text-center">Action</th>
-                    </tr>
-                </thead>
-                <tbody id="live-student-rows">
-                    <tr><td colspan="6" class="text-center text-muted">Loading live status...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+    <table class="table table-sm mb-0">
+      <tr><th class="w-25">Departemen</th><td class="text-end"><?= esc($dep) ?></td></tr>
+      <tr><th>Blok</th><td class="text-end"><?= esc($blok) ?></td></tr>
+      <tr><th>Tanggal</th><td class="text-end"><?= tgl_id($uji['tanggal']) ?></td></tr>
+      <tr><th>Waktu</th><td class="text-end">
+        <?= $uji['mulai'] ? substr($uji['mulai'],0,5) : '-' ?> s.d <?= $uji['selesai'] ? substr($uji['selesai'],0,5) : '-' ?>
+      </td></tr>
+      <tr><th>Jlh. Peserta</th><td class="text-end" id="jmlPeserta"><?= (int)$jumlah ?></td></tr>
+        <tr><th>Passing Grade</th>
+        <td class="text-end">
+          <span class="badge bg-secondary"><?= $min ?></span>
+        </td>
+      </tr>
+    </table>
+  </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<div class="card mb-3">
+  <div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom">
+    <strong class="text-primary"><i class="bi bi-people-fill me-1"></i> Peserta Ujian</strong>
+    <button id="btnTambahPeserta" class="btn btn-sm btn-primary">
+      <i class="bi bi-person-plus-fill me-1"></i> Tambah Peserta
+    </button>
+  </div>
+  <div class="card-body p-0" id="wrapPeserta" style="min-height: 100px;">
+    <!-- diisi ajax -->
+  </div>
+</div>
 
+<div class="card mb-3">
+  <div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom">
+    <strong class="text-success"><i class="bi bi-journal-text me-1"></i> Daftar Soal dalam Paket</strong>
+    <button id="btnTambahSoal" class="btn btn-sm btn-success">
+      <i class="bi bi-plus-circle-fill me-1"></i> Pilih Soal dari Bank
+    </button>
+  </div>
+  <div class="card-body p-0" id="wrapSoal" style="min-height: 100px;">
+    <!-- diisi ajax -->
+  </div>
+</div>
+
+<!-- MODAL: pilih mahasiswa -->
+<div class="modal fade" id="modalMahasiswa" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title"><i class="bi bi-person-plus me-1"></i> Pilih Mahasiswa</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-0" id="modalBodyMahasiswa" style="min-height: 300px;">
+        <!-- diisi ajax -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: pilih soal -->
+<div class="modal fade" id="modalSoal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title"><i class="bi bi-journal-plus me-1"></i> Pilih Soal dari Bank Soal</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-0" id="modalBodySoal" style="min-height: 300px;">
+        <div class="p-5 text-center text-muted">Memuat soal...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<?php $this->endSection(); ?>
+
+<?php $this->section('scripts'); ?>
 <script>
+(function(){
+  const kode   = <?= json_encode($uji['kode']) ?>;
+  const paket_id = <?= (int)$uji['id'] ?>;
+  const $wrapPeserta = $('#wrapPeserta');
+  const $wrapSoal    = $('#wrapSoal');
+  
+  const modalMhsEl= document.getElementById('modalMahasiswa');
+  const modalMhs  = new bootstrap.Modal(modalMhsEl);
+  
+  const modalSoalEl= document.getElementById('modalSoal');
+  const modalSoal  = new bootstrap.Modal(modalSoalEl);
+
+  // --- PESERTA LOGIC ---
+  function loadPeserta(){
+    $wrapPeserta.html('<div class="p-4 text-center text-muted">Memuat peserta...</div>');
+    $.get('<?= site_url('admin/ujian/teori/peserta') ?>/'+encodeURIComponent(kode), function(html){
+      $wrapPeserta.html(html);
+      const count = $('#tblPeserta tbody tr').not(':has(td[colspan])').length;
+      $('#jmlPeserta').text(count);
+    });
+  }
+  loadPeserta();
+
+  function loadModalMhs(q='', page=1){
+    const $body = $('#modalBodyMahasiswa');
+    $body.html('<div class="p-5 text-center text-muted"><div class="spinner-border spinner-border-sm me-2"></div>Memuat data mahasiswa...</div>');
+    
+    const url = '<?= site_url('admin/ujian/teori/pilih-mahasiswa') ?>/'+encodeURIComponent(kode)
+              + '?q=' + encodeURIComponent(q) + '&page=' + page;
+    
+    $.get(url, function(html){
+      $body.html(html);
+    }).fail(()=> $body.html('<div class="p-5 text-center text-danger">Gagal memuat data.</div>'));
+  }
+
+  $('#btnTambahPeserta').on('click', function(){
+    loadModalMhs('', 1);
+    modalMhs.show();
+  });
+
+  $(document).on('input', '#mhsSearch', debounce(function(){
+    loadModalMhs(this.value || '', 1);
+  }, 300));
+
+  $(document).on('click', '.mhs-page', function(e){
+    e.preventDefault();
+    loadModalMhs($('#mhsSearch').val() || '', $(this).data('page') || 1);
+  });
+
+  $(document).on('click', '.btn-pilih', function(){
+    const mid = $(this).data('id');
+    $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+    
+    $.postCSRF('<?= site_url('admin/ujian/teori/peserta-add') ?>/'+encodeURIComponent(kode)+'/'+mid)
+     .done(function(res){
+        if(res.status==='ok'){
+          swalToast('Berhasil menambahkan peserta');
+          loadPeserta();
+          loadModalMhs($('#mhsSearch').val()||'', $('.mhs-page.active').data('page')||1);
+        } else {
+          Swal.fire('Gagal', res.message || 'Error', 'error');
+          loadModalMhs($('#mhsSearch').val()||'', $('.mhs-page.active').data('page')||1);
+        }
+     });
+  });
+
+  $(document).on('click','.btn-hapus-peserta', function(){
+    const mid = $(this).data('id');
+    Swal.fire({ title:'Hapus peserta?', text: "Peserta akan dikeluarkan dari sesi ini.", icon:'warning', showCancelButton:true, confirmButtonText:'Ya, hapus' })
+      .then((r)=>{
+        if(!r.isConfirmed) return;
+        Loader.show();
+        $.postCSRF('<?= site_url('admin/ujian/teori/peserta-del') ?>/'+encodeURIComponent(kode)+'/'+mid)
+         .done(function(res){
+            if(res.status==='ok'){
+              swalToast('Peserta dihapus');
+              loadPeserta();
+            }
+         }).always(()=> Loader.hide());
+      });
+  });
+
+  // --- SOAL LOGIC ---
+  function loadSoal(){
+    $wrapSoal.html('<div class="p-4 text-center text-muted">Memuat daftar soal...</div>');
+    $.get('<?= site_url('admin/ujian/teori/soal-list') ?>/'+paket_id, function(html){
+      $wrapSoal.html(html);
+    });
+  }
+  loadSoal();
+
+  function loadModalSoal(q='', page=1){
+    const $body = $('#modalBodySoal');
+    $body.html('<div class="p-5 text-center text-muted"><div class="spinner-border spinner-border-sm me-2"></div>Memuat bank soal...</div>');
+    
+    const url = '<?= site_url('admin/ujian/teori/pilih-soal') ?>/'+paket_id
+              + '?q=' + encodeURIComponent(q) + '&page=' + page;
+              
+    $.get(url, function(html){
+      $body.html(html);
+    }).fail(()=> $body.html('<div class="p-5 text-center text-danger">Gagal memuat bank soal.</div>'));
+  }
+
+  $('#btnTambahSoal').on('click', function(){
+    loadModalSoal('', 1);
+    modalSoal.show();
+  });
+
+  $(document).on('input', '#soalSearch', debounce(function(){
+    loadModalSoal(this.value || '', 1);
+  }, 300));
+
+  $(document).on('click', '.soal-page', function(e){
+    e.preventDefault();
+    loadModalSoal($('#soalSearch').val() || '', $(this).data('page') || 1);
+  });
+
+  $(document).on('click', '.btn-pilih-soal', function(){
+    const sid = $(this).data('id');
+    $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+    
+    $.postCSRF('<?= site_url('admin/ujian/teori/soal-add') ?>/'+paket_id+'/'+sid)
+     .done(function(res){
+        if(res.status==='ok'){
+          swalToast('Soal berhasil ditambahkan');
+          loadSoal();
+          loadModalSoal($('#soalSearch').val()||'', $('.soal-page.active').data('page')||1);
+        } else {
+          Swal.fire('Gagal', res.message || 'Error', 'error');
+          loadModalSoal($('#soalSearch').val()||'', $('.soal-page.active').data('page')||1);
+        }
+     });
+  });
+
+  $(document).on('click', '.btn-hapus-soal', function(){
+    const sid = $(this).data('id');
+    Swal.fire({ title:'Hapus soal?', text: "Soal akan dilepas dari paket ujian ini.", icon:'warning', showCancelButton:true, confirmButtonText:'Ya, hapus' })
+      .then((r)=>{
+        if(!r.isConfirmed) return;
+        Loader.show();
+        $.postCSRF('<?= site_url('admin/ujian/teori/soal-del') ?>/'+sid)
+         .done(function(res){
+            if(res.status==='ok'){
+              swalToast('Soal dilepas');
+              loadSoal();
+            }
+         }).always(()=> Loader.hide());
+      });
+  });
+
+})();
+
 $(document).ready(function() {
     const examId   = '<?= $ujian['id'] ?? 0; ?>';
     const examCode = '<?= esc($ujian['kode'] ?? ''); ?>';
@@ -175,4 +402,6 @@ function forceSubmit(attemptId) {
     });
 }
 </script>
-<?= $this->endSection() ?>
+
+
+<?php $this->endSection(); ?>
