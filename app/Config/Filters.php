@@ -76,13 +76,13 @@ class Filters extends BaseFilters
      */
   public array $globals = [
     'before' => [
-        'csrf' => [
-            'except' => [
-                'admin/login',
-                'teori/login',
-                'api/*'
-            ]
-        ],
+        // 'csrf' => [
+        //     'except' => [
+        //         'admin/login',
+        //         'teori/login',
+        //         'api/*'
+        //     ]
+        // ],
     ],
     'after'  => ['toolbar'],
 ];
