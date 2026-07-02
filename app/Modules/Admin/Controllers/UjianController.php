@@ -64,6 +64,175 @@ class UjianController extends BaseController
         ]);
     }
 
+    public function importOffline()
+    {
+        if (!$this->request->is('post')) {
+            return redirect()->to(site_url('admin/ujian/teori'))->with('error', 'Metode request tidak diizinkan');
+        }
+
+        $file = $this->request->getFile('zip_file');
+        if (!$file || !$file->isValid()) {
+            return redirect()->to(site_url('admin/ujian/teori'))->with('error', 'File tidak valid atau tidak ditemukan');
+        }
+
+        if ($file->getClientExtension() !== 'zip') {
+            return redirect()->to(site_url('admin/ujian/teori'))->with('error', 'Hanya file ZIP yang diperbolehkan');
+        }
+
+        // Pindahkan file zip ke folder sementara (writable/uploads/temp_import/)
+        $tempDir = WRITEPATH . 'uploads/temp_import/' . uniqid('import_', true) . '/';
+        if (!is_dir($tempDir)) {
+            mkdir($tempDir, 0777, true);
+        }
+
+        try {
+            $zipName = $file->getRandomName();
+            $file->move($tempDir, $zipName);
+            $zipPath = $tempDir . $zipName;
+
+            // Gunakan ZipArchive untuk mengekstrak file zip tersebut
+            $zip = new \ZipArchive();
+            if ($zip->open($zipPath) !== true) {
+                throw new \Exception('Gagal membuka file ZIP');
+            }
+
+            $extractPath = $tempDir . 'extracted/';
+            if (!is_dir($extractPath)) {
+                mkdir($extractPath, 0777, true);
+            }
+            $zip->extractTo($extractPath);
+            $zip->close();
+
+            // Baca isi data.json dan decode menjadi array PHP
+            $jsonFilePath = $extractPath . 'data.json';
+            if (!is_file($jsonFilePath)) {
+                throw new \Exception('File data.json tidak ditemukan dalam ZIP');
+            }
+
+            $jsonData = file_get_contents($jsonFilePath);
+            $data = json_decode($jsonData, true);
+            if (empty($data) || !isset($data['uji'])) {
+                throw new \Exception('Format data.json tidak valid');
+            }
+
+            $uji = $data['uji'];
+            $soalList = $data['soal'] ?? [];
+            $pesertaList = $data['peserta'] ?? [];
+            $mahasiswaList = $data['mahasiswa'] ?? [];
+
+            // Gunakan Database Transaction
+            $this->db->transStart();
+
+            // 1. Ujian/Sesi (buat_teori)
+            $existingUji = $this->db->table('buat_teori')->where('kode', $uji['kode'])->get()->getRowArray();
+            if ($existingUji) {
+                $this->db->table('buat_teori')->where('kode', $uji['kode'])->update($uji);
+                $idUjian = $existingUji['id'];
+            } else {
+                $existingUjiById = $this->db->table('buat_teori')->where('id', $uji['id'])->get()->getRowArray();
+                if ($existingUjiById) {
+                    $this->db->table('buat_teori')->where('id', $uji['id'])->update($uji);
+                    $idUjian = $uji['id'];
+                } else {
+                    $this->db->table('buat_teori')->insert($uji);
+                    $idUjian = $this->db->insertID();
+                }
+            }
+
+            // 2. Mahasiswa
+            if (!empty($mahasiswaList)) {
+                foreach ($mahasiswaList as $mhs) {
+                    $existingMhs = $this->db->table('mahasiswa')->where('nim', $mhs['nim'])->get()->getRowArray();
+                    if ($existingMhs) {
+                        $this->db->table('mahasiswa')->where('nim', $mhs['nim'])->update($mhs);
+                    } else {
+                        $existingMhsById = $this->db->table('mahasiswa')->where('id', $mhs['id'])->get()->getRowArray();
+                        if ($existingMhsById) {
+                            $this->db->table('mahasiswa')->where('id', $mhs['id'])->update($mhs);
+                        } else {
+                            $this->db->table('mahasiswa')->insert($mhs);
+                        }
+                    }
+                }
+            }
+
+            // 3. Admin CBT (Peserta)
+            if (!empty($pesertaList)) {
+                $this->db->table('admin_cbt')->where('kode', $uji['kode'])->delete();
+                $this->db->table('admin_cbt')->insertBatch($pesertaList);
+            }
+
+            // 4. Soal (ujian_teori)
+            if (!empty($soalList)) {
+                foreach ($soalList as &$soal) {
+                    $soal['id_paket'] = $idUjian;
+                    $existingSoal = $this->db->table('ujian_teori')->where('id', $soal['id'])->get()->getRowArray();
+                    if ($existingSoal) {
+                        $this->db->table('ujian_teori')->where('id', $soal['id'])->update($soal);
+                    } else {
+                        $this->db->table('ujian_teori')->insert($soal);
+                    }
+                }
+                unset($soal);
+            }
+
+            // 5. Pindahkan file gambar/media dari hasil ekstrak
+            $srcMediaDir = $extractPath . 'uploads/soal_teori/';
+            $destMediaDir = FCPATH . 'uploads/soal_teori/';
+            if (is_dir($srcMediaDir)) {
+                if (!is_dir($destMediaDir)) {
+                    mkdir($destMediaDir, 0777, true);
+                }
+                $files = scandir($srcMediaDir);
+                foreach ($files as $f) {
+                    if ($f === '.' || $f === '..') continue;
+                    $srcFile = $srcMediaDir . $f;
+                    $destFile = $destMediaDir . $f;
+                    if (is_file($srcFile)) {
+                        copy($srcFile, $destFile);
+                    }
+                }
+            }
+
+            $this->db->transComplete();
+
+            // Hapus folder sementara hasil ekstrak
+            $this->_deleteDir($tempDir);
+
+            if ($this->db->transStatus() === false) {
+                return redirect()->to(site_url('admin/ujian/teori'))->with('error', 'Gagal menyimpan data ke database lokal');
+            }
+
+            return redirect()->to(site_url('admin/ujian/teori'))->with('success', 'Ujian offline berhasil di-import');
+
+        } catch (\Exception $e) {
+            if (is_dir($tempDir)) {
+                $this->_deleteDir($tempDir);
+            }
+            return redirect()->to(site_url('admin/ujian/teori'))->with('error', 'Gagal memproses file import: ' . $e->getMessage());
+        }
+    }
+
+    private function _deleteDir($dirPath)
+    {
+        if (!is_dir($dirPath)) {
+            return;
+        }
+        if (substr($dirPath, strlen($dirPath) - 1, 1) != '/') {
+            $dirPath .= '/';
+        }
+        $files = glob($dirPath . '*', GLOB_MARK);
+        foreach ($files as $file) {
+            if (is_dir($file)) {
+                $this->_deleteDir($file);
+            } else {
+                unlink($file);
+            }
+        }
+        rmdir($dirPath);
+    }
+
+
     // 2. API: Get Live Student Status for the Room Investigator
     public function getLiveStatus($id)
     {
@@ -395,7 +564,7 @@ class UjianController extends BaseController
     public function teori()
     {
         $r     = $this->request;
-        $tab   = $r->getGet('tab') ?: 'mendatang';     // review|mendatang|berlangsung|selesai
+        $tab   = $r->getGet('tab') ?: 'berlangsung';     // review|mendatang|berlangsung|selesai
         $page  = max(1, (int)$r->getGet('page'));
         $per   = 20;
         $today = date('Y-m-d');

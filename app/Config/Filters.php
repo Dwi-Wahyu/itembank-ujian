@@ -37,7 +37,8 @@ class Filters extends BaseFilters
           'auth'      => \App\Filters\UserAuth::class, 
              'adminauth' => \App\Filters\AdminAuth::class, 
              'osceauth' => \App\Filters\OsceAuthFilter::class,
-               'teoriauth' => \App\Filters\TeoriAuth::class,  // <- ini
+               'teoriauth' => \App\Filters\TeoriAuth::class,
+        'IpUjianFilter' => \App\Filters\IpUjianFilter::class,
     ];
 
     /**
@@ -83,6 +84,7 @@ class Filters extends BaseFilters
         //         'api/*'
         //     ]
         // ],
+        'IpUjianFilter'
     ],
     'after'  => ['toolbar'],
 ];

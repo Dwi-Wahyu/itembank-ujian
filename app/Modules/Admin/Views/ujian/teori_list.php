@@ -2,7 +2,7 @@
 $this->extend('\Modules\Admin\Views\layouts\admin');
 $this->section('content');
 
-$tab   = $tab ?? 'mendatang';
+$tab   = $tab ?? 'berlangsung';
 $f     = $filters ?? [];
 $q     = $f['q'] ?? '';
 $depId = $f['depId'] ?? '';
@@ -15,15 +15,16 @@ function qurl($p=[]){ return current_url().'?'.http_build_query(array_merge($_GE
 
 <div class="d-flex align-items-center justify-content-between mb-3">
   <h2 class="page-title">Sesi Ujian Teori</h2>
-  <button class="btn btn-primary" id="btnAdd"><i class="bi bi-plus-circle me-1"></i> Tambah Sesi</button>
+  <div>
+    <button type="button" class="btn btn-info text-white me-2" data-bs-toggle="modal" data-bs-target="#importOfflineModal">
+      <i class="bi bi-upload me-1"></i> Import Ujian Offline
+    </button>
+    <button class="btn btn-primary" id="btnAdd"><i class="bi bi-plus-circle me-1"></i> Tambah Sesi</button>
+  </div>
 </div>
 
 <ul class="nav nav-pills mb-3">
   
-  <li class="nav-item">
-    <a class="nav-link js-tab <?= $tab==='mendatang'?'active':'' ?>"
-       data-tab="mendatang" href="<?= qurl(['tab'=>'mendatang','page'=>1]) ?>">Mendatang</a>
-  </li>
   <li class="nav-item">
     <a class="nav-link js-tab <?= $tab==='berlangsung'?'active':'' ?>"
        data-tab="berlangsung" href="<?= qurl(['tab'=>'berlangsung','page'=>1]) ?>">Berlangsung</a>
@@ -222,6 +223,31 @@ function qurl($p=[]){ return current_url().'?'.http_build_query(array_merge($_GE
     </form>
   </div>
 </div>
+</div>
+
+<!-- MODAL IMPORT OFFLINE -->
+<div class="modal fade" id="importOfflineModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" id="formImportOffline" method="post" action="<?= base_url('admin/ujian/import-offline') ?>" enctype="multipart/form-data">
+      <?= csrf_field() ?>
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-upload me-1"></i> Import Ujian Offline</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">File ZIP Ujian</label>
+          <input type="file" name="zip_file" class="form-control" accept=".zip" required>
+          <div class="form-text">Pilih file ZIP hasil export dari aplikasi online.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tutup</button>
+        <button type="submit" class="btn btn-info text-white"><i class="bi bi-check2-circle me-1"></i> Import</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <?php $this->endSection(); ?>
 
@@ -235,7 +261,7 @@ function qurl($p=[]){ return current_url().'?'.http_build_query(array_merge($_GE
     return u.searchParams.get(key);
   }
   function setActiveTabFromUrl(url){
-    const t = getParam(url, 'tab') || 'mendatang';
+    const t = getParam(url, 'tab') || 'berlangsung';
     $('.nav-pills .nav-link').removeClass('active')
       .filter(`[data-tab="${t}"]`).addClass('active');
     $('#filterForm input[name="tab"]').val(t); // sinkron ke hidden input filter

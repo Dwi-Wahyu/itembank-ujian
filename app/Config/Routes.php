@@ -108,6 +108,7 @@ $routes->group('admin', ['namespace' => 'Modules\Admin\Controllers'], static fun
         // Ujian Proctoring & Syncing Routes
         $routes->get ('ujian/teori/detail/(:num)', 'UjianController::teoriDetail/$1');
         $routes->get ('ujian/teori/live-status/(:num)', 'UjianController::getLiveStatus/$1');
+        $routes->post('ujian/import-offline', 'UjianController::importOffline');
         
         $routes->get ('sync/auto', 'UjianController::autoSyncOnLogin');
         $routes->get ('ujian/teori/pull/(:any)', 'UjianController::pullExam/$1');
