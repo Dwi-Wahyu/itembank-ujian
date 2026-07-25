@@ -5,7 +5,7 @@ use CodeIgniter\Config\BaseConfig;
 class Custom extends BaseConfig
 {
     // default yang diizinkan ke admin area
-    public array $adminRoles = [0, 1, 2, 3, 4];
+    public array $adminRoles = [0, 1, 2, 3, 4, 6];
 
     // label (opsional, berguna untuk pesan/log)
     public array $roleLabels = [
@@ -15,6 +15,7 @@ class Custom extends BaseConfig
         3 => 'Ketua',
         4 => 'Reviewer',
         5 => 'Dosen',
+        6 => 'Operator Ujian',
     ];
 
     public function __construct()

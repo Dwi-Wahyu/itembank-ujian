@@ -4,7 +4,7 @@ use Modules\Auth\Libraries\Auth;
 $u        = Auth::user();
 $role     = (int)($u['role_id'] ?? $u['id_role'] ?? -1);
 $canSuper = ($role === 0);                 // superadmin
-$canStd   = in_array($role, [1,2,3,4], true);
+$canStd   = in_array($role, [1,2,3,4,6], true);
 
 $isActive = fn(string $k) => (($menuActive ?? '') === $k) ? 'active' : '';
 $open     = fn(array $keys)  => in_array($menuActive ?? '', $keys, true) ? 'show'  : '';
