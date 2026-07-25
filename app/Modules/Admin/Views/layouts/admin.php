@@ -42,6 +42,14 @@
     padding:20px 24px 24px; /* spasi nyaman kiri-kanan-atas */
     overflow-x:hidden;      /* biar halaman nggak bisa geser kiri-kanan */
   }
+
+  /* === BOOTSTRAP MODAL FIX: pastikan modal selalu di atas backdrop === */
+  .modal {
+    z-index: 1060 !important;
+  }
+  .modal-backdrop {
+    z-index: 1050 !important;
+  }
 </style>
 
 </head>
@@ -179,8 +187,14 @@ window.initPickers = function(ctx){
   });
 };
 
-// jalankan otomatis saat halaman siap
-document.addEventListener('DOMContentLoaded', function(){ window.initPickers(); });
+document.addEventListener('DOMContentLoaded', function(){ 
+  window.initPickers();
+  $(document).on('show.bs.modal', '.modal', function () {
+    if ($(this).parent().is('body') === false) {
+      $(this).appendTo('body');
+    }
+  });
+});
 window.withListLoading = function($container, fn){
   const overlay = $(
     '<div class="table-loading"><div class="spinner-border" role="status" aria-hidden="true"></div></div>'

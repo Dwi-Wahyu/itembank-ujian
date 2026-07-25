@@ -267,12 +267,14 @@ function qurl($p=[]){ return current_url().'?'.http_build_query(array_merge($_GE
   }
 
   // ---- MODAL references + pickers ----
-  const modalAddEl  = document.getElementById('modalAdd');
-  const modalEditEl = document.getElementById('modalEdit');
-  const modalAdd  = new bootstrap.Modal(modalAddEl);
-  const modalEdit = new bootstrap.Modal(modalEditEl);
-  modalAddEl.addEventListener('shown.bs.modal',  () => window.initPickers(modalAddEl));
-  modalEditEl.addEventListener('shown.bs.modal', () => window.initPickers(modalEditEl));
+  const modalAddEl    = document.getElementById('modalAdd');
+  const modalEditEl   = document.getElementById('modalEdit');
+  const modalImportEl = document.getElementById('importOfflineModal');
+  const modalAdd    = modalAddEl ? new bootstrap.Modal(modalAddEl) : null;
+  const modalEdit   = modalEditEl ? new bootstrap.Modal(modalEditEl) : null;
+  const modalImport = modalImportEl ? new bootstrap.Modal(modalImportEl) : null;
+  if (modalAddEl) modalAddEl.addEventListener('shown.bs.modal',  () => window.initPickers(modalAddEl));
+  if (modalEditEl) modalEditEl.addEventListener('shown.bs.modal', () => window.initPickers(modalEditEl));
 
   // ---- loader list AJAX + set active tab ----
   function loadList(url){
