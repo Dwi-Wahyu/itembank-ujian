@@ -223,7 +223,6 @@ function qurl($p=[]){ return current_url().'?'.http_build_query(array_merge($_GE
     </form>
   </div>
 </div>
-</div>
 
 <!-- MODAL IMPORT OFFLINE -->
 <div class="modal fade" id="importOfflineModal" tabindex="-1" aria-hidden="true">
