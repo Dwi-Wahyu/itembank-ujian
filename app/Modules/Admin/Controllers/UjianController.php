@@ -159,6 +159,10 @@ class UjianController extends BaseController
             // 3. Admin CBT (Peserta)
             if (!empty($pesertaList)) {
                 $this->db->table('admin_cbt')->where('kode', $uji['kode'])->delete();
+                foreach ($pesertaList as &$p) {
+                    unset($p['id']);
+                }
+                unset($p);
                 $this->db->table('admin_cbt')->insertBatch($pesertaList);
             }
 
@@ -312,6 +316,10 @@ class UjianController extends BaseController
             // 3. Admin CBT (Peserta)
             if (!empty($pesertaList) && !empty($uji['kode'])) {
                 $this->db->table('admin_cbt')->where('kode', $uji['kode'])->delete();
+                foreach ($pesertaList as &$p) {
+                    unset($p['id']);
+                }
+                unset($p);
                 $this->db->table('admin_cbt')->insertBatch($pesertaList);
             }
 
@@ -320,6 +328,7 @@ class UjianController extends BaseController
                 $this->db->table('osce_soal')->where('osce_id', $idUjian)->delete();
                 foreach ($stations as &$st) {
                     $st['osce_id'] = $idUjian;
+                    unset($st['id']);
                 }
                 unset($st);
                 $this->db->table('osce_soal')->insertBatch($stations);
