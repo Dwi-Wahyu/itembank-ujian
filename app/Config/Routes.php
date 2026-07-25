@@ -103,6 +103,7 @@ $routes->group('admin', ['namespace' => 'Modules\Admin\Controllers'], static fun
         $routes->post('ujian/praktek/peserta-add/(:segment)/(:num)', 'UjianController::pesertaAdd/$1/$2');
         $routes->post('ujian/praktek/peserta-del/(:segment)/(:num)', 'UjianController::pesertaDel/$1/$2');
         $routes->post('ujian/praktek/delete/(:num)', 'UjianController::osceDelete/$1'); // optional
+        $routes->post('ujian/praktek/import-offline', 'UjianController::importOfflinePraktek');
 
 
         // Ujian Proctoring & Syncing Routes
