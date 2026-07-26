@@ -23,10 +23,19 @@ class IpUjianFilter implements FilterInterface
             return;
         }
 
-        $allowedPrefix = env('ALLOWED_IP_PREFIX', '192.168.10.');
+        $allowedPrefixesRaw = env('ALLOWED_IP_PREFIX', '192.168.10.');
+        $allowedPrefixes = array_filter(array_map('trim', explode(',', $allowedPrefixesRaw)));
 
-        // Tolak jika IP klien tidak berawalan prefix lab
-        if (strpos($clientIp, $allowedPrefix) !== 0) {
+        $isAllowed = false;
+        foreach ($allowedPrefixes as $prefix) {
+            if ($prefix !== '' && strpos($clientIp, $prefix) === 0) {
+                $isAllowed = true;
+                break;
+            }
+        }
+
+        // Tolak jika IP klien tidak berawalan salah satu prefix lab
+        if (!$isAllowed) {
             return Services::response()
                 ->setStatusCode(403)
                 ->setBody('Akses Ditolak: Perangkat Anda berada di luar jaringan lab ujian.');
