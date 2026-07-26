@@ -12,7 +12,7 @@ class IpUjianFilter implements FilterInterface
     public function before(RequestInterface $request, $arguments = null)
     {
         // Jika CI_ENVIRONMENT adalah development, matikan proteksi filter IP
-        if (env('CI_ENVIRONMENT') === 'development') {
+        if (ENVIRONMENT === 'development') {
             return;
         }
 
