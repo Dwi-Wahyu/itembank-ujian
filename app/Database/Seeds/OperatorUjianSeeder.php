@@ -25,9 +25,9 @@ class OperatorUjianSeeder extends Seeder
             'password'   => password_hash($password, PASSWORD_DEFAULT),
             'role_id'    => 6,
             'blok'       => '0',
-            'departemen' => null,
+            'departemen' => '0',
             'old'        => 0,
-            'kordinator' => null,
+            'kordinator' => '0',
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ];
