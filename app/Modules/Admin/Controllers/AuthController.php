@@ -14,10 +14,11 @@ use Config\Custom;
 class AuthController extends BaseController
 {
       private array $ADMIN_ROLES;
- public function __construct()
- {
-     $this->ADMIN_ROLES = config(Custom::class)->adminRoles ?? [0,1,2,3,4];
- }
+    public function __construct()
+    {
+        // Hanya role Operator Ujian (6) yang diizinkan login pada aplikasi offline ini.
+        $this->ADMIN_ROLES = [6];
+    }
 
     public function index()
     {

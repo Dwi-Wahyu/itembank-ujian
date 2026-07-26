@@ -24,19 +24,6 @@ $station_id=(int)$uji['id']
   </div>
 </div>
 
-<div class="card mb-3 border-warning shadow-sm">
-  <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
-    <h6 class="mb-0"><i class="bi bi-cloud-arrow-down me-1"></i> Sinkronisasi OSCE</h6>
-  </div>
-  <div class="card-body d-flex gap-2">
-    <button id="btn-pull-osce" class="btn btn-success btn-sm">
-      <i class="bi bi-download me-1"></i> 1. Fetch Data OSCE dari VPS
-    </button>
-    <button id="btn-push-osce" class="btn btn-warning btn-sm">
-      <i class="bi bi-upload me-1"></i> 2. Push Hasil OSCE ke VPS
-    </button>
-  </div>
-</div>
 
 <div class="row">
   <div class="col-md-12">
@@ -536,48 +523,6 @@ $station_id=(int)$uji['id']
 
     const osceKode = <?= json_encode($uji['kode']) ?>;
 
-    $('#btn-pull-osce').click(function() {
-        Swal.fire({
-            icon: 'question',
-            title: 'Sinkronisasi OSCE?',
-            html: `Fetch data sesi <strong>${osceKode}</strong> dari VPS ke database lokal.`,
-            showCancelButton: true,
-            confirmButtonText: 'Ya, Fetch',
-            cancelButtonText: 'Batal',
-        }).then(r => {
-            if (!r.isConfirmed) return;
-            const $btn = $('#btn-pull-osce').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Downloading...');
-            $.get('<?= site_url('admin/ujian/praktek/pull') ?>/' + encodeURIComponent(osceKode))
-                .done(res => {
-                    const icon = res.status === 'success' ? 'success' : 'error';
-                    Swal.fire({ icon, title: res.status === 'success' ? 'Berhasil' : 'Gagal', text: res.message })
-                        .then(() => { if (res.status === 'success') location.reload(); });
-                })
-                .fail(() => Swal.fire({ icon: 'error', title: 'Network Error', text: 'Tidak dapat terhubung ke server.' }))
-                .always(() => $btn.prop('disabled', false).html('<i class="bi bi-download me-1"></i> 1. Fetch Data OSCE dari VPS'));
-        });
-    });
-
-    $('#btn-push-osce').click(function() {
-        Swal.fire({
-            icon: 'question',
-            title: 'Kirim Hasil OSCE?',
-            html: `Semua nilai OSCE lokal untuk <strong>${osceKode}</strong> akan dikirim ke server utama.`,
-            showCancelButton: true,
-            confirmButtonText: 'Ya, Kirim',
-            cancelButtonText: 'Batal',
-            confirmButtonColor: '#f59e0b',
-        }).then(r => {
-            if (!r.isConfirmed) return;
-            const $btn = $('#btn-push-osce').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Uploading...');
-            $.post('<?= site_url('admin/ujian/praktek/push') ?>/' + encodeURIComponent(osceKode), {
-                [csrfTokenName]: csrfTokenValue
-            })
-                .done(res => Swal.fire({ icon: res.status === 'success' ? 'success' : 'error', title: res.status === 'success' ? 'Berhasil' : 'Gagal', text: res.message }))
-                .fail(() => Swal.fire({ icon: 'error', title: 'Network Error', text: 'Tidak dapat terhubung ke server.' }))
-                .always(() => $btn.prop('disabled', false).html('<i class="bi bi-upload me-1"></i> 2. Push Hasil OSCE ke VPS'));
-        });
-    });
 
   })();
 </script>
