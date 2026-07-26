@@ -11,6 +11,11 @@ class IpUjianFilter implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {
+        // Jika CI_ENVIRONMENT adalah development, matikan proteksi filter IP
+        if (env('CI_ENVIRONMENT') === 'development') {
+            return;
+        }
+
         $clientIp = $request->getIPAddress();
 
         // Always allow loopback/localhost access for development/local testing
