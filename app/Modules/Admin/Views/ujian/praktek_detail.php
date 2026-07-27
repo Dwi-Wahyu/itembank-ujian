@@ -122,7 +122,10 @@ $station_id=(int)$uji['id']
           </div>
           <div class="col-md-6">
             <label class="form-label">Kode Station</label>
-            <input class="form-control" name="kode" required>
+            <div class="input-group">
+              <input class="form-control" name="kode" id="station_kode" required>
+              <button type="button" class="btn btn-outline-secondary" id="btnGenKodeStation"><i class="bi bi-shuffle"></i></button>
+            </div>
           </div>
           <div class="col-md-6">
             <label class="form-label">Waktu (menit)</label>
@@ -471,6 +474,19 @@ $station_id=(int)$uji['id']
           modalStation.show();
         }
       }).always(() => Loader.hide());
+    });
+
+    $('#btnGenKodeStation').on('click', function() {
+      Loader.show();
+      $.get('<?= base_url('admin/ujian/teori/newcode') ?>', function(res) {
+        if(res.status==='ok') {
+          $('#station_kode').val(res.kode);
+          swalToast('Kode dibuat');
+        } else {
+          Swal.fire('Gagal', res.message || 'Tidak bisa membuat kode', 'error');
+        }
+      }).fail(() => Swal.fire('Gagal', 'Tidak bisa membuat kode', 'error'))
+        .always(() => Loader.hide());
     });
 
     $('#formOsceSoal').on('submit', function(e) {
