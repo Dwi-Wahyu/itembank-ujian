@@ -14,7 +14,13 @@ class OperatorUjianSeeder extends Seeder
 
         $existing = $this->db->table('users')->where('username', $username)->get()->getRowArray();
         if ($existing) {
-            echo "User '{$username}' sudah ada, dilewati." . PHP_EOL;
+            $this->db->table('users')
+                ->where('username', $username)
+                ->update([
+                    'password'   => password_hash($password, PASSWORD_DEFAULT),
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ]);
+            echo "User '{$username}' sudah ada, password berhasil diperbarui." . PHP_EOL;
             return;
         }
 
