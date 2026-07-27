@@ -15,6 +15,11 @@ $station_id=(int)$uji['id']
 
 <div class="card mb-3">
   <div class="card-body p-0">
+    <div class="card-body d-flex gap-3">
+        <button id="btn-push-results" class="btn btn-warning px-4">
+            <i class="fa fa-upload"></i> Kirim Hasil Ujian
+        </button>
+    </div>
     <table class="table table-sm mb-0">
       <tr><th class="w-25">Departemen</th><td class="text-end"><?= esc($dep) ?></td></tr>
       <tr><th>Blok</th><td class="text-end"><?= esc($blok) ?></td></tr>
@@ -522,6 +527,36 @@ $station_id=(int)$uji['id']
     });
 
     const osceKode = <?= json_encode($uji['kode']) ?>;
+
+    // ---- Push ----
+    $('#btn-push-results').click(function() {
+        Swal.fire({
+            icon: 'question',
+            title: 'Kirim Hasil Ujian?',
+            html: `Semua nilai lokal untuk sesi <strong>${osceKode}</strong> akan dikirim ke server utama.`,
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Kirim',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#f59e0b',
+        }).then(result => {
+            if (!result.isConfirmed) return;
+            const $btn = $('#btn-push-results').prop('disabled', true)
+                .html('<i class="fa fa-spinner fa-spin"></i> Mengirim...');
+
+            $.post('/admin/ujian/praktek/push/' + encodeURIComponent(osceKode), {
+                [csrfTokenName]: csrfTokenValue
+            })
+                .done(res => {
+                    const icon = res.status === 'success' ? 'success' : 'error';
+                    Swal.fire({ icon, title: res.status === 'success' ? 'Berhasil' : 'Gagal', text: res.message });
+                    $btn.prop('disabled', false).html('<i class="fa fa-upload"></i> Kirim Hasil Ujian');
+                })
+                .fail(() => {
+                    Swal.fire({ icon: 'error', title: 'Network Error', text: 'Gagal menghubungi server.' });
+                    $btn.prop('disabled', false).html('<i class="fa fa-upload"></i> Kirim Hasil Ujian');
+                });
+        });
+    });
 
 
   })();

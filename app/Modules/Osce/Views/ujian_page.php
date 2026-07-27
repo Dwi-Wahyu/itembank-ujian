@@ -493,14 +493,6 @@
         <div class="q-body">
           <div id="exOptions" class="q-options"></div>
           <!-- Global Performance Scale -->
-  <div class="gps-wrap">
-    <div class="gps-title">Global performance Scale</div>
-    <div id="gpsGroup" class="gps-group"></div>
-    <div class="legend">
-      <div class="legend-title">Ket:</div>
-      <div class="legend-body">0: Salah<br>1: Borderline<br>2: Membenarkan benar</div>
-    </div>
-  </div>
           <div class="legend">
             <div class="legend-title">Ket:</div>
             <div id="exLegend" class="legend-body"></div>
@@ -621,7 +613,6 @@ function renderPage(){
     // Legend ala desain
     qs('#exLegend').innerHTML = `
       <div class="gps-panel">
-        <div><b>Ket:</b></div>
         <div>0: Salah</div>
         <div>1: Borderline</div>
         <div>2: Menyebutkan benar</div>

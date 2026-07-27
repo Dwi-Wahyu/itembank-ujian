@@ -41,9 +41,9 @@ $min = (int)($uji['nilai_minimum'] ?? $uji['nilai_minimum'] ?? 0);
 <div class="card mb-3">
   <div class="card-body p-0">
     <div class="card-body d-flex gap-3">
-            <button id="btn-push-results" class="btn btn-warning px-4">
-                <i class="fa fa-upload"></i> Push Final Grades to VPS
-            </button>
+        <button id="btn-push-results" class="btn btn-warning px-4">
+            <i class="fa fa-upload"></i> Kirim Hasil Ujian
+        </button>
         </div>
 
     <table class="table table-sm mb-0">
@@ -329,7 +329,7 @@ $(document).ready(function() {
         }).then(result => {
             if (!result.isConfirmed) return;
             const $btn = $('#btn-push-results').prop('disabled', true)
-                .html('<i class="fa fa-spinner fa-spin"></i> Uploading...');
+                .html('<i class="fa fa-spinner fa-spin"></i> Mengirim...');
 
             $.post('/admin/ujian/teori/push/' + encodeURIComponent(examCode), {
                 [csrfTokenName]: csrfTokenValue
@@ -337,11 +337,11 @@ $(document).ready(function() {
                 .done(res => {
                     const icon = res.status === 'success' ? 'success' : 'error';
                     Swal.fire({ icon, title: res.status === 'success' ? 'Berhasil' : 'Gagal', text: res.message });
-                    $btn.prop('disabled', false).html('<i class="fa fa-upload"></i> 2. Push Final Grades to VPS');
+                    $btn.prop('disabled', false).html('<i class="fa fa-upload"></i> Kirim Hasil Ujian');
                 })
                 .fail(() => {
                     Swal.fire({ icon: 'error', title: 'Network Error', text: 'Gagal menghubungi server.' });
-                    $btn.prop('disabled', false).html('<i class="fa fa-upload"></i> 2. Push Final Grades to VPS');
+                    $btn.prop('disabled', false).html('<i class="fa fa-upload"></i> Kirim Hasil Ujian');
                 });
         });
     });

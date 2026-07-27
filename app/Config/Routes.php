@@ -6,10 +6,12 @@ use CodeIgniter\Router\RouteCollection;
  * @var RouteCollection $routes
  */
 
+$routes->get('/', static function() {
+    return redirect()->to('/admin');
+});
+
 $routes->group('', ['namespace' => 'Modules\Auth\Controllers'], static function ($routes) {
-    $routes->get('/', 'AuthController::index');
     $routes->get('login', 'AuthController::index');
-    
     $routes->post('auth/login', 'AuthController::login');
 });
 

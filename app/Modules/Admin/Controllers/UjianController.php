@@ -510,7 +510,7 @@ class UjianController extends BaseController
                 }
             }
         } catch (\Exception $e) {
-            // Silent fail — don't block login if VPS unreachable
+            log_message('error', 'Pull Teori failed: ' . $e->getMessage());
         }
 
         // Pull OSCE sessions:
@@ -527,13 +527,17 @@ class UjianController extends BaseController
                 $osceBody = json_decode($osceResponse->getBody(), true);
                 $osceSessions = $osceBody['data'] ?? [];
             }
-        } catch (\Exception $e) { /* silent fail */ }
+        } catch (\Exception $e) {
+            log_message('error', 'Pull OSCE list failed: ' . $e->getMessage());
+        }
 
         foreach ($osceSessions as $s) {
             $kode = $s['kode'] ?? null;
             if (!$kode) continue;
             if (isset($s['tanggal']) && $s['tanggal'] < $today) continue;
-            try { $this->_doPullOsce($kode); } catch (\Exception $e) {}
+            try { $this->_doPullOsce($kode); } catch (\Exception $e) {
+                log_message('error', "Pull OSCE {$kode} failed: " . $e->getMessage());
+            }
         }
 
         // Store sync summary in session flash
@@ -601,10 +605,18 @@ class UjianController extends BaseController
 
         $results = $this->db->table('jawaban_osce')
             ->where('osce_id', $session['id'])
+            ->where('synced_at IS NULL', null, false)
             ->get()->getResultArray();
 
         if (empty($results)) {
             return $this->response->setJSON(['status' => 'error', 'message' => 'Tidak ada data jawaban untuk dikirim.']);
+        }
+
+        foreach ($results as &$res) {
+            $aspek = $this->db->table('jawaban_osce_aspek')
+                ->where('jawaban_osce_id', $res['id'])
+                ->get()->getResultArray();
+            $res['aspek'] = $aspek;
         }
 
         $client = \Config\Services::curlrequest();
@@ -622,6 +634,14 @@ class UjianController extends BaseController
             if ($response->getStatusCode() >= 400) {
                 return $this->response->setJSON(['status' => 'error', 'message' => 'Gagal push: HTTP ' . $response->getStatusCode()]);
             }
+
+            $syncedIds = array_column($results, 'id');
+            if (!empty($syncedIds)) {
+                $this->db->table('jawaban_osce')
+                    ->whereIn('id', $syncedIds)
+                    ->update(['synced_at' => date('Y-m-d H:i:s')]);
+            }
+
             return $this->response->setJSON(['status' => 'success', 'message' => $result['message'] ?? 'Berhasil.']);
         } catch (\Exception $e) {
             return $this->response->setJSON(['status' => 'error', 'message' => $e->getMessage()]);
@@ -633,6 +653,7 @@ class UjianController extends BaseController
         $attempts = $this->db->table('ujian_attempt')
             ->where('kode', $kode_ujian)
             ->whereIn('status', ['done', 'finished', 'ongoing']) 
+            ->where('synced_at IS NULL', null, false)
             ->get()->getResultArray();
 
         if (empty($attempts)) {
@@ -664,6 +685,18 @@ class UjianController extends BaseController
                     return $this->response->setJSON(['status' => 'error', 'message' => 'Failed to push results: ' . $result['error']]);
                 }
                 return $this->response->setJSON(['status' => 'error', 'message' => 'Failed to push results: HTTP ' . $response->getStatusCode() . ' - ' . $body]);
+            }
+
+            $syncedIds = [];
+            foreach ($attempts as $a) {
+                if (in_array($a['status'], ['done', 'finished'])) {
+                    $syncedIds[] = $a['id'];
+                }
+            }
+            if (!empty($syncedIds)) {
+                $this->db->table('ujian_attempt')
+                    ->whereIn('id', $syncedIds)
+                    ->update(['synced_at' => date('Y-m-d H:i:s')]);
             }
 
             if (is_array($result) && isset($result['message'])) {
