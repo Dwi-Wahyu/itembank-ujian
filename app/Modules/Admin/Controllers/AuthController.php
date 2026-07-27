@@ -16,8 +16,9 @@ class AuthController extends BaseController
       private array $ADMIN_ROLES;
     public function __construct()
     {
-        // Hanya role Operator Ujian (6) yang diizinkan login pada aplikasi offline ini.
-        $this->ADMIN_ROLES = [6];
+        $this->m = new UserModel();
+        // Mengizinkan superadmin (0) dan operator (6) login ke aplikasi ujian lokal
+        $this->ADMIN_ROLES = [0, 6];
     }
 
     public function index()
