@@ -14,16 +14,32 @@ class ResetPasswordSeeder extends Seeder
         // Buat hash password (menggunakan BCRYPT secara default)
         $hashedPassword = password_hash($plainPassword, PASSWORD_DEFAULT);
 
-        $data = [
-            'password' => $hashedPassword,
-        ];
+        $existing = $this->db->table('users')->where('username', 'superadmin')->get()->getRowArray();
+        if ($existing) {
+            $data = [
+                'password' => $hashedPassword,
+            ];
+            $this->db->table('users')
+                     ->where('username', 'superadmin') 
+                     ->update($data);
 
-        // Ganti 'users' dengan nama tabel user Anda
-        // Ganti 'id' atau 'username' sesuai user yang ingin direset (contoh ID 1)
-        $this->db->table('users')
-                 ->where('username', 'superadmin') 
-                 ->update($data);
-
-        echo "Password berhasil direset menjadi: " . $plainPassword . PHP_EOL;
+            echo "User 'superadmin' sudah ada, password berhasil direset menjadi: " . $plainPassword . PHP_EOL;
+        } else {
+            $data = [
+                'name'       => 'Superadmin',
+                'username'   => 'superadmin',
+                'email'      => 'superadmin@example.test',
+                'password'   => $hashedPassword,
+                'role_id'    => 0,
+                'blok'       => '0',
+                'departemen' => '0',
+                'old'        => 0,
+                'kordinator' => '0',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ];
+            $this->db->table('users')->insert($data);
+            echo "User 'superadmin' berhasil dibuat dengan password: " . $plainPassword . PHP_EOL;
+        }
     }
 }

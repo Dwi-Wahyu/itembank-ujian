@@ -63,64 +63,6 @@ $aria     = fn(array $keys)  => in_array($menuActive ?? '', $keys, true) ? 'true
       </div>
       <?php endif; ?>
       <?php endif; ?>
-
-      <?php if ($canSuper): ?>
-      <div class="menu-section">Admin</div>
-
-      <!-- MASTER DATA -->
-      <a class="menu-item menu-parent" data-bs-toggle="collapse" href="#navMaster" role="button"
-         aria-expanded="<?= $aria(['master_bid_ilmu','master_departemen','master_blok','kel_penyakit','master_kom_utama','master_mahasiswa','master_dosen']) ?>" aria-controls="navMaster">
-        <i class="bi bi-database-fill-gear"></i><span>Master Data</span>
-        <i class="bi bi-chevron-down ms-auto caret"></i>
-      </a>
-      <div class="collapse submenu <?= $open(['master_bid_ilmu','master_departemen','master_blok','kel_penyakit','master_kom_utama','master_mahasiswa','master_dosen']) ?>" id="navMaster" data-bs-parent="#sidebarMenu">
-        <a class="submenu-item <?= $isActive('master_bid_ilmu')  ?>" href="<?= site_url('admin/master/bid-ilmu')  ?>">
-          <span>Bidang Ilmu</span>
-        </a>
-        <a class="submenu-item <?= $isActive('master_departemen') ?>" href="<?= site_url('admin/master/departemen') ?>">
-          <span>Departemen</span>
-        </a>
-        <a class="submenu-item <?= $isActive('master_blok') ?>" href="<?= site_url('admin/master/blok') ?>">
-          <span>Blok</span>
-        </a>
-        <a class="submenu-item <?= $isActive('kel_penyakit') ?>" href="<?= site_url('admin/master/kel-penyakit') ?>">
-          <span>Kel Penyakit</span>
-        </a>
-        <a class="submenu-item <?= $isActive('master_kom_utama') ?>" href="<?= site_url('admin/master/kom-utama') ?>">
-          <span>Kompetensi Utama</span>
-        </a>
-        <a class="submenu-item <?= $isActive('master_mahasiswa') ?>" href="<?= site_url('admin/master/mahasiswa') ?>">
-          <span>Mahasiswa</span>
-        </a>
-        <a class="submenu-item <?= $isActive('master_dosen') ?>" href="<?= site_url('admin/master/dosen') ?>">
-          <span>Dosen</span>
-        </a>
-      </div>
-      
-      <!-- PENGGUNA -->
-      <a class="menu-item menu-parent" data-bs-toggle="collapse" href="#navPengguna" role="button"
-         aria-expanded="<?= $aria(['pengguna-dosen','pengguna-reviewer','pengguna-operator','pengguna-manajemen','pengguna-administrator']) ?>" aria-controls="navPengguna">
-        <i class="bi bi-people-fill"></i><span>Pengguna</span>
-        <i class="bi bi-chevron-down ms-auto caret"></i>
-      </a>
-      <div class="collapse submenu <?= $open(['pengguna-dosen','pengguna-reviewer','pengguna-operator','pengguna-manajemen','pengguna-administrator']) ?>" id="navPengguna" data-bs-parent="#sidebarMenu">
-        <a class="submenu-item <?= $isActive('pengguna-dosen')  ?>" href="<?= site_url('admin/master/pengguna-dosen')  ?>">
-          <span>Dosen</span>
-        </a>
-        <a class="submenu-item <?= $isActive('pengguna-reviewer')  ?>" href="<?= site_url('admin/master/pengguna-reviewer')  ?>">
-          <span>Reviewer</span>
-        </a>
-        <a class="submenu-item <?= $isActive('pengguna-operator')  ?>" href="<?= site_url('admin/master/pengguna-operator')  ?>">
-          <span>Operator Ujian</span>
-        </a>
-        <a class="submenu-item <?= $isActive('pengguna-manajemen')  ?>" href="<?= site_url('admin/master/pengguna-manajemen')  ?>">
-          <span>Manajemen</span>
-        </a>
-        <a class="submenu-item <?= $isActive('pengguna-administrator')  ?>" href="<?= site_url('admin/master/pengguna-administrator')  ?>">
-          <span>Administrator</span>
-        </a>
-      </div>
-      <?php endif; ?>
     </nav>
   </div>
 </aside>
