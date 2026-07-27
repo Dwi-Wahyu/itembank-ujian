@@ -83,11 +83,18 @@ class SyncRetryCommand extends BaseCommand
             
             if (empty($attempts)) continue;
 
+            $participants = $db->table('admin_cbt')
+                ->where('kode', $kode)
+                ->get()->getResultArray();
+
             try {
                 $url = rtrim($managementUrl, '/') . '/api/sync/import-results';
                 $response = $client->request('POST', $url, [
                     'headers' => ['X-API-KEY' => $syncApiKey, 'Content-Type' => 'application/json'],
-                    'json' => ['attempts' => $attempts],
+                    'json' => [
+                        'attempts' => $attempts,
+                        'participants' => $participants
+                    ],
                     'verify' => env('CI_ENVIRONMENT') === 'production' ? true : false,
                     'http_errors' => false
                 ]);
@@ -130,13 +137,30 @@ class SyncRetryCommand extends BaseCommand
                 $res['aspek'] = $aspek;
             }
 
+            $osce = $db->table('osce')->select('kode')->where('id', $osce_id)->get()->getRowArray();
+            $osceKode = $osce['kode'] ?? null;
+            $participants = [];
+            if ($osceKode) {
+                $participants = $db->table('admin_cbt')
+                    ->where('kode', $osceKode)
+                    ->get()->getResultArray();
+            }
+
+            $stations = $db->table('osce_soal')
+                ->where('osce_id', $osce_id)
+                ->get()->getResultArray();
+
             CLI::write("Pushing OSCE ID: {$osce_id}", 'yellow');
 
             try {
                 $url = rtrim($managementUrl, '/') . '/api/sync/import-osce-results';
                 $response = $client->request('POST', $url, [
                     'headers' => ['X-API-KEY' => $syncApiKey, 'Content-Type' => 'application/json'],
-                    'json' => ['results' => $results],
+                    'json' => [
+                        'results' => $results,
+                        'participants' => $participants,
+                        'stations' => $stations
+                    ],
                     'verify' => env('CI_ENVIRONMENT') === 'production' ? true : false,
                     'http_errors' => false
                 ]);

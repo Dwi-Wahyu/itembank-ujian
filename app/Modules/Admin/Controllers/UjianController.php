@@ -608,8 +608,16 @@ class UjianController extends BaseController
             ->where('synced_at IS NULL', null, false)
             ->get()->getResultArray();
 
-        if (empty($results)) {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'Tidak ada data jawaban untuk dikirim.']);
+        $participants = $this->db->table('admin_cbt')
+            ->where('kode', $kode)
+            ->get()->getResultArray();
+
+        $stations = $this->db->table('osce_soal')
+            ->where('osce_id', $session['id'])
+            ->get()->getResultArray();
+
+        if (empty($results) && empty($participants) && empty($stations)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Tidak ada data jawaban, peserta, atau station untuk dikirim.']);
         }
 
         foreach ($results as &$res) {
@@ -625,7 +633,11 @@ class UjianController extends BaseController
         try {
             $response = $client->request('POST', $url, [
                 'headers'     => ['X-API-KEY' => $this->syncApiKey, 'Content-Type' => 'application/json'],
-                'json'        => ['results' => $results],
+                'json'        => [
+                    'results'      => $results,
+                    'participants' => $participants,
+                    'stations'     => $stations
+                ],
                 'verify'      => env('CI_ENVIRONMENT') === 'production' ? true : false,
                 'http_errors' => false,
             ]);
@@ -656,8 +668,12 @@ class UjianController extends BaseController
             ->where('synced_at IS NULL', null, false)
             ->get()->getResultArray();
 
-        if (empty($attempts)) {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'No attempts found to sync.']);
+        $participants = $this->db->table('admin_cbt')
+            ->where('kode', $kode_ujian)
+            ->get()->getResultArray();
+
+        if (empty($attempts) && empty($participants)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'No attempts or participants found to sync.']);
         }
 
         $client = \Config\Services::curlrequest();
@@ -669,7 +685,10 @@ class UjianController extends BaseController
                     'X-API-KEY' => $this->syncApiKey,
                     'Content-Type' => 'application/json'
                 ],
-                'json' => ['attempts' => $attempts],
+                'json' => [
+                    'attempts' => $attempts,
+                    'participants' => $participants
+                ],
                 'verify' => env('CI_ENVIRONMENT') === 'production' ? true : false,
                 'http_errors' => false
             ]);
