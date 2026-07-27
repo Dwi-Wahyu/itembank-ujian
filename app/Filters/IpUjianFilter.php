@@ -11,6 +11,9 @@ class IpUjianFilter implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {
+        // Pengecekan IP dinonaktifkan sementara
+        return;
+
         // Jika CI_ENVIRONMENT adalah development, matikan proteksi filter IP
         if (ENVIRONMENT === 'development') {
             return;
