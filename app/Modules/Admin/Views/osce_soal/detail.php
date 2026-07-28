@@ -47,7 +47,7 @@
           <tr><th style="width:160px">Nama Station</th><td><?= esc($station['nama_station'] ?? '-') ?></td></tr>
           <tr><th>Kode Station</th><td><?= esc($station['kode'] ?? '-') ?></td></tr>
           <tr><th>Waktu (menit)</th><td><?= (int)($station['waktu'] ?? 0) ?></td></tr>
-          <tr><th>Pengawas</th><td><?= esc(($station['nip_pengawas']??'').' - '.($station['nama_pengawas']??'')) ?></td></tr>
+          <tr><th>Penguji</th><td><?= esc(($station['nip_pengawas']??'').' - '.($station['nama_pengawas']??'')) ?></td></tr>
         </table>
       </div>
     </div>
@@ -152,6 +152,7 @@
                 <th style="min-width:120px">Status</th>
                 <th style="min-width:110px">GPS</th>  
                 <th style="min-width:80px">Nilai</th>
+                <th style="min-width:180px">Keterangan</th>
                 <th style="min-width:180px">Tanggal Ujian</th>
                 <th style="min-width:180px">Waktu Pengerjaan</th>
 
@@ -279,8 +280,9 @@
             + '<td>'+ esc(r._nama) +'</td>'
             + '<td>'+ esc(r.nama_station || '-') +'</td>'
             + '<td>'+ pill +'</td>'
-            + '<td>'+ esc(r.gps_text) +'</td>'  
+            + '<td>'+ gpsPill +'</td>'  
             + '<td>'+ nilai +'</td>'
+            + '<td>'+ esc(r.keterangan || '-') +'</td>'
             + '<td>'+ esc(r.tanggal_jam_ujian  || '-') +'</td>' 
             + '<td>'+ esc(r.waktu || '-') +'</td>' 
             + '</tr>'

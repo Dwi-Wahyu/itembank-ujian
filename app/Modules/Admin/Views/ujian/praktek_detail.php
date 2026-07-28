@@ -111,8 +111,8 @@ $station_id=(int)$uji['id']
             <select class="form-select js-soal" name="soal_id" required></select>
           </div>
           <div class="col-md-6">
-            <label class="form-label">Pengawas</label>
-            <select class="form-select js-pengawas" name="pengawas" data-placeholder="Cari pengawas" required></select>
+            <label class="form-label">Penguji</label>
+            <select class="form-select js-pengawas" name="pengawas" data-placeholder="Cari penguji" required></select>
             <input type="hidden" name="nip_pengawas">
             <input type="hidden" name="nama_pengawas">
           </div>
@@ -163,6 +163,7 @@ $station_id=(int)$uji['id']
                 <th style="min-width:120px">Kode Station</th>
                 <th style="min-width:120px">Global Skor</th>
                 <th style="min-width:100px">GPS</th>
+                <th style="min-width:180px">Keterangan</th>
                 <th style="min-width:120px">Status</th>
                 <th style="min-width:180px">Waktu / Created</th>
               </tr>
@@ -349,6 +350,7 @@ $station_id=(int)$uji['id']
               '<td>'+ esc(r.station_kode) +'</td>'+
               '<td>'+ esc(r.global_skor) +'</td>'+
               '<td>'+ (r.gps_text ?? '-') +'</td>'+
+              '<td>'+ esc(r.keterangan || '-') +'</td>'+
               '<td><span class="badge bg-'+badge+'">'+ esc(r.status) +'</span></td>'+
 
               '<td><small>'+ esc(r.tanggal_jam_ujian || '-') +'</small></td>'+
@@ -415,7 +417,7 @@ $station_id=(int)$uji['id']
     function buildPengawasSelect($el, parent){
       $el.select2({
         width: '100%',
-        placeholder: 'Cari pengawas (NIP/Nama)',
+        placeholder: 'Cari penguji (NIP/Nama)',
         allowClear: true,
         dropdownParent: $(parent),
         ajax: {

@@ -16,3 +16,8 @@ try {
     $db->query("ALTER TABLE jawaban_osce ADD COLUMN synced_at DATETIME NULL");
     echo "Ujian: synced_at added to jawaban_osce\n";
 } catch (Exception $e) { echo $e->getMessage() . "\n"; }
+
+try {
+    $db->query("ALTER TABLE jawaban_osce ADD COLUMN keterangan TEXT NULL");
+    echo "Ujian: keterangan added to jawaban_osce\n";
+} catch (Exception $e) { echo $e->getMessage() . "\n"; }

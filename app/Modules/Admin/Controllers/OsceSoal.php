@@ -294,7 +294,7 @@ public function detail($id)
     // Join sesuai requirement: osce_soal.soal_id = jawaban_osce.soal_id
 $rows = $this->db->table('jawaban_osce jo')
   ->select('jo.id, jo.osce_id, jo.soal_id, jo.kode_penguji, jo.mahasiswa_id,
-            jo.global_skor, jo.gps, jo.waktu, jo.created_at, jo.updated_at,
+            jo.global_skor, jo.gps, jo.keterangan, jo.waktu, jo.created_at, jo.updated_at,
             s.id AS station_id, s.nama_station, s.kode AS station_kode')
   ->select("
     CASE CAST(jo.gps AS UNSIGNED)
@@ -369,6 +369,7 @@ public function historyMahasiswaStation($stationId)
             jo.mahasiswa_id,
             jo.global_skor,
             jo.gps,
+            jo.keterangan,
             jo.waktu,
             jo.created_at,
             jo.updated_at,
@@ -458,7 +459,7 @@ public function historyMahasiswaPdf($mahasiswaId)
     // --- data history (sama seperti historyMahasiswa) ---
     $rows = $db->table('jawaban_osce jo')
         ->select('jo.id, jo.osce_id, jo.soal_id, jo.kode_penguji,s.nama_pengawas, jo.mahasiswa_id,
-                  jo.global_skor, jo.gps, jo.waktu, jo.created_at, jo.updated_at,
+                  jo.global_skor, jo.gps, jo.keterangan, jo.waktu, jo.created_at, jo.updated_at,
                   s.id AS station_id, s.nama_station, s.kode AS station_kode')
         ->select("
             CASE CAST(jo.gps AS UNSIGNED)
@@ -483,7 +484,7 @@ public function historyMahasiswaPdf($mahasiswaId)
             $r['tanggal_ujian'] = '-';
         }
 
-        $r['status'] = is_null($r['global_skor']) ? 'Belum Ujian' : 'Sudah Ujian';
+        $r['status'] = !empty($r['keterangan']) ? $r['keterangan'] : (is_null($r['global_skor']) ? 'Belum Ujian' : 'Sudah Ujian');
     }
     unset($r);
 

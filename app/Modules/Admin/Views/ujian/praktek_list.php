@@ -2,7 +2,7 @@
 $this->extend('\Modules\Admin\Views\layouts\admin');
 $this->section('content');
 
-$tab   = $tab ?? 'berlangsung';
+$tab   = $tab ?? 'mendatang';
 $f     = $filters ?? [];
 $q     = $f['q'] ?? '';
 $depId = $f['depId'] ?? '';
@@ -38,8 +38,8 @@ function qurl($p=[]){ return current_url().'?'.http_build_query(array_merge($_GE
 
 <ul class="nav nav-pills mb-3">
   <li class="nav-item">
-    <a class="nav-link js-tab <?= $tab==='berlangsung'?'active':'' ?>"
-       data-tab="berlangsung" href="<?= qurl(['tab'=>'berlangsung','page'=>1]) ?>">Berlangsung</a>
+    <a class="nav-link js-tab <?= $tab==='mendatang'?'active':'' ?>"
+       data-tab="mendatang" href="<?= qurl(['tab'=>'mendatang','page'=>1]) ?>">Mendatang</a>
   </li>
   <li class="nav-item">
     <a class="nav-link js-tab <?= $tab==='selesai'?'active':'' ?>"
@@ -129,7 +129,7 @@ function qurl($p=[]){ return current_url().'?'.http_build_query(array_merge($_GE
        <div class="row g-3 mt-1">
           <div class="col-md-4">
             <label class="form-label">Tanggal</label>
-            <input type="text" class="form-control js-date" name="tanggal" id="edit_tanggal" required>
+            <input type="text" class="form-control js-date" name="tanggal" id="add_tanggal" required>
           </div>
               </div>
         <div class="row g-3 mt-1">
@@ -243,7 +243,7 @@ function qurl($p=[]){ return current_url().'?'.http_build_query(array_merge($_GE
     return u.searchParams.get(key);
   }
   function setActiveTabFromUrl(url){
-    const t = getParam(url, 'tab') || 'berlangsung';
+    const t = getParam(url, 'tab') || 'mendatang';
     $('.nav-pills .nav-link').removeClass('active')
       .filter(`[data-tab="${t}"]`).addClass('active');
     $('#filterForm input[name="tab"]').val(t); // sinkron ke hidden input filter
@@ -352,9 +352,14 @@ $('#btnGenKode').on('click', function(){
           const d = res.data;
           $('#edit_id').val(d.id);
           $('#edit_nama').val(d.nama_ujian);
-          $('#edit_dep').val(d.dapertemen_id);
+          $('#edit_dep').val(d.departemen_id || d.dapertemen_id || '');
           $('#edit_blok').val(d.blok);
-          $('#edit_tanggal').val(d.tanggal);
+          const tglEl = document.getElementById('edit_tanggal');
+          if (tglEl && tglEl._flatpickr) {
+            tglEl._flatpickr.setDate(d.tanggal, true);
+          } else {
+            $('#edit_tanggal').val(d.tanggal);
+          }
         
           $('#edit_kode').val(d.kode);
           $('#edit_jml').val(d.jumlah_soal);

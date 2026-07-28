@@ -171,21 +171,15 @@ private static function minutesToHms(int $m): string
     $mediaSoal = $this->normalizeFilesFromSoal($meta['file'] ?? null, base_url('uploads/soal_praktek'));
 
     // --- 3) ambil hasil (jawaban_osce) + waktu tersimpan
-   // --- 3) ambil hasil (jawaban_osce) + waktu tersimpan
 $hasil = $this->db->table('jawaban_osce')
-    ->select('id, global_skor, waktu, kode_penguji, gps') // <— tambah gps
+    ->select('id, global_skor, waktu, kode_penguji, gps, keterangan')
     ->where('osce_id', $osceId)
     ->where('soal_id', $soalId)
     ->where('mahasiswa_id', $mid)
     ->get()->getRowArray();
 
-
-
 $gpsInit = isset($hasil['gps']) && $hasil['gps'] !== '' ? (int)$hasil['gps'] : null;
-
-
-
-
+$ketInit = $hasil['keterangan'] ?? '';
 
     if (!$hasil) {
         // kalau tidak pernah ujian, arahkan balik
@@ -240,7 +234,8 @@ $gpsInit = isset($hasil['gps']) && $hasil['gps'] !== '' ? (int)$hasil['gps'] : n
         'readOnly'    => true,            // <-- kunci: view non-interaktif
         'waktuMenit'  => 0,               // jangan jalankan timer count-down
         'nilaiInit'   => $ansMap, 
-          'gpsInit'    => $gpsInit,         // untuk preselect di JS
+        'gpsInit'     => $gpsInit,         // untuk preselect di JS
+        'ketInit'     => $ketInit,
         'csrf_name'   => csrf_token(),
         'csrf_tok'    => csrf_hash(),
     ];
@@ -341,15 +336,27 @@ public function ujianPage($mhsId)
         ];
     }
 
+    $hasil = $this->db->table('jawaban_osce')
+        ->select('id, global_skor, waktu, kode_penguji, gps, keterangan')
+        ->where('osce_id', (int)($os['osce_id'] ?? 0))
+        ->where('soal_id', $sid)
+        ->where('mahasiswa_id', $mid)
+        ->get()->getRowArray();
+
+    $gpsInit = isset($hasil['gps']) && $hasil['gps'] !== '' ? (int)$hasil['gps'] : null;
+    $ketInit = $hasil['keterangan'] ?? '';
+
     return view('\Modules\Osce\Views\ujian_page', [
         'mhs'       => $mhs,
         'skenario'  => (string)$meta['skenario'],
         'tugas_k'   => (string)$meta['tugas_k'],
         'items'     => $items,
         'mediaSoal' => $mediaSoal,                 // <— PENTING: kirim top-level
+        'gpsInit'   => $gpsInit,
+        'ketInit'   => $ketInit,
         'csrf_name' => csrf_token(),
         'csrf_tok'  => csrf_hash(),
-        'os'=>$os
+        'os'        => $os
     ]);
 }
 
@@ -472,10 +479,12 @@ public function ujianSubmit($mhsId)
         $total += $sv;
     }
 
-    // 1b) NEW: gps (0/1/2)
+    // 1b) NEW: gps (0/1/2) & keterangan
     $gps = $this->request->getPost('gps');
     $gps = is_numeric($gps) ? (int)$gps : null;
     if ($gps !== null && !in_array($gps, [0,1,2], true)) $gps = null;
+
+    $keterangan = trim((string)$this->request->getPost('keterangan'));
 
     // 2) Waktu
     $waktuStr = (string)$this->request->getPost('waktu');
@@ -516,6 +525,7 @@ public function ujianSubmit($mhsId)
             'global_skor'  => $total,
             'waktu'        => $waktuStr,
             'kode_penguji' => $kodePenguji,
+            'keterangan'   => $keterangan,
             'updated_at'   => $now,
         ];
         if ($gps !== null) $upd['gps'] = $gps; // NEW
@@ -528,6 +538,7 @@ public function ujianSubmit($mhsId)
             'global_skor'   => $total,
             'waktu'         => $waktuStr,
             'kode_penguji'  => $kodePenguji,
+            'keterangan'    => $keterangan,
             'created_at'    => $now,
             'updated_at'    => $now,
         ];

@@ -50,16 +50,12 @@
             <label class="form-label">Nama</label>
             <input class="form-control" name="name" required>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-6">
             <label class="form-label">Username</label>
             <input class="form-control" name="username" required>
           </div>
-          <div class="col-md-3">
-            <label class="form-label">Email</label>
-            <input type="email" class="form-control" name="email">
-          </div>
 
-          <div class="col-md-3">
+          <div class="col-md-4">
             <label class="form-label">Blok</label>
             <select class="form-select" name="blok">
               <option value="">-- Pilih Blok --</option>
@@ -68,7 +64,7 @@
               <?php endforeach; ?>
             </select>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-4">
             <label class="form-label">Departemen</label>
             <select class="form-select" name="departemen">
               <option value="">-- Pilih Departemen --</option>
@@ -77,26 +73,7 @@
               <?php endforeach; ?>
             </select>
           </div>
-          <div class="col-md-3">
-            <label class="form-label">Kordinator</label>
-            <input class="form-control" name="kordinator">
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">Umur</label>
-            <input type="number" class="form-control" name="old" min="0">
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Avatar</label>
-            <div class="d-flex align-items-center gap-2">
-              <div id="avatarPreviewWrap">
-                <img id="avatarPreview" src="<?= base_url('assets/img/default-avatar.png') ?>" alt="Preview" style="width:45px;height:45px;object-fit:cover;border-radius:50%;border:1px solid #ddd">
-              </div>
-              <input type="file" class="form-control" name="avatar_file" accept="image/*" id="inputAvatar">
-            </div>
-            <small class="text-muted">Format: JPG, PNG. Maks 2MB.</small>
-          </div>
-          <div class="col-md-6">
+          <div class="col-md-4">
             <label class="form-label">Password <small class="text-muted">(kosongkan jika tidak diubah)</small></label>
             <input type="password" class="form-control" name="password" autocomplete="new-password">
           </div>

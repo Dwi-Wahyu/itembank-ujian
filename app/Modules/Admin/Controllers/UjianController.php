@@ -777,10 +777,11 @@ class UjianController extends BaseController
     public function teori()
     {
         $r     = $this->request;
-        $tab   = $r->getGet('tab') ?: 'berlangsung';     // review|mendatang|berlangsung|selesai
+        $tab   = $r->getGet('tab') ?: 'mendatang';     // review|mendatang|selesai
         $page  = max(1, (int)$r->getGet('page'));
         $per   = 20;
-        $today = date('Y-m-d');
+        $today    = date('Y-m-d');
+        $nextWeek = date('Y-m-d', strtotime('+7 days'));
 
         // filters
         $q       = trim((string)$r->getGet('q'));           // nama ujian
@@ -800,7 +801,8 @@ class UjianController extends BaseController
         // === scope berdasarkan tab ===
         switch ($tab) {
             case 'mendatang':
-                $b->where('u.tanggal >', $today);
+                $b->where('u.tanggal >=', $today)
+                  ->where('u.tanggal <=', $nextWeek);
                 break;
             case 'berlangsung':
                 $b->where('u.tanggal =', $today);
@@ -1022,10 +1024,11 @@ class UjianController extends BaseController
     public function praktek()
     {
         $r     = $this->request;
-        $tab   = $r->getGet('tab') ?: 'berlangsung';     // berlangsung|selesai
+        $tab   = $r->getGet('tab') ?: 'mendatang';     // mendatang|selesai
         $page  = max(1, (int)$r->getGet('page'));
         $per   = 20;
-        $today = date('Y-m-d');
+        $today    = date('Y-m-d');
+        $nextWeek = date('Y-m-d', strtotime('+7 days'));
 
         // filters
         $q       = trim((string)$r->getGet('q'));          // nama ujian (nama_ujian)
@@ -1043,6 +1046,7 @@ class UjianController extends BaseController
 
         // scope tab (berdasarkan tanggal)
         switch ($tab) {
+            case 'mendatang':    $b->where('u.tanggal >=', $today)->where('u.tanggal <=', $nextWeek); break;
             case 'berlangsung':  $b->where('u.tanggal =', $today); break;
             case 'selesai':      $b->where('u.tanggal <', $today); break;
             default:             $b->where('u.tanggal =', $today); break;
@@ -1169,17 +1173,21 @@ class UjianController extends BaseController
         $rawTgl  = (string) $this->request->getPost('tanggal');
         $tanggal = $rawTgl ? date('Y-m-d', strtotime(str_replace('/','-',$rawTgl))) : null;
 
+        $nama = $this->request->getPost('nama_ujian') !== null && $this->request->getPost('nama_ujian') !== ''
+            ? $this->request->getPost('nama_ujian')
+            : $this->request->getPost('nama');
+        $dep  = $this->request->getPost('departemen_id') ?: $this->request->getPost('dapertemen_id');
+
         $data = [
             'kode'          => strtoupper(trim((string)$this->request->getPost('kode'))),
-            'nama_ujian'    => trim((string)$this->request->getPost('nama_ujian')),
-            'departemen_id' => $this->request->getPost('departemen_id') ?: null,
+            'nama_ujian'    => trim((string)$nama),
+            'departemen_id' => $dep ?: null,
             'blok'          => $this->request->getPost('blok') ?: null,
             'tanggal'       => $tanggal,
             'updated_at'    => date('Y-m-d H:i:s'),
         ];
 
-        
-        if ($this->request->getPost('nama')==='' || empty($tanggal)) {
+        if (empty($data['nama_ujian']) || empty($tanggal)) {
             return $this->response->setStatusCode(422)
                 ->setJSON(['status'=>'error','message'=>'Nama & tanggal wajib diisi.']);
         }
@@ -1426,7 +1434,8 @@ class UjianController extends BaseController
         {
             $blokId = $this->request->getGet('blok_id');
             $tab    = $this->request->getGet('tab') ?: 'review';
-            $today  = date('Y-m-d');
+            $today    = date('Y-m-d');
+            $nextWeek = date('Y-m-d', strtotime('+7 days'));
 
             $b = $this->db->table('ujian_teori u')
                 ->select('u.nama_ujian,u.tanggal,u.waktu_mulai,u.waktu_selesai,
@@ -1437,7 +1446,7 @@ class UjianController extends BaseController
             if ($blokId) $b->where('u.blok_id', (int)$blokId);
 
             switch ($tab) {
-                case 'mendatang':   $b->where('u.tanggal >', $today); break;
+                case 'mendatang':   $b->where('u.tanggal >=', $today)->where('u.tanggal <=', $nextWeek); break;
                 case 'berlangsung': $b->where('u.tanggal =', $today); break;
                 case 'selesai':     $b->where('u.tanggal <', $today); break;
                 default:            $b->where('u.review_acc', 0);     break;

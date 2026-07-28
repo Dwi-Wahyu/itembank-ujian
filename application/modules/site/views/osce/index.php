@@ -15,7 +15,6 @@
           <div class="card-header d-flex p-0" style="border-bottom: 0 !important">
             <ul class="nav nav-tabs" style="border-bottom: 0 !important;">
               <li class="nav-item"><a class="nav-link active" href="#tab-main" data-url="<?=current_url().'?tab=upcoming'?>" data-tab="info" data-toggle="tab" style="margin-left: 0 !important">Mendatang</a></li>
-              <li class="nav-item"><a class="nav-link" href="#tab-main" data-url="<?=current_url().'?tab=current'?>" data-tab="konteks" data-toggle="tab">Berlangsung</a></li>
               <li class="nav-item"><a class="nav-link" href="#tab-main" data-url="<?=current_url().'?tab=past'?>" data-tab="register" data-toggle="tab">Selesai</a></li>
             </ul>
           </div>
