@@ -10,8 +10,8 @@ function qp($p=[]){ return current_url().'?'.http_build_query(array_merge($_GET,
           <th style="width:110px">#</th>
           <th style="width:120px">Kode</th>
           <th style="width:200px">Soal</th>
-          <th>NIP Pengawas</th>
-          <th>Nama Pengawas</th>
+          <th>NIP Penguji</th>
+          <th>Nama Penguji</th>
           <th>Station</th>
           <th style="width:90px">Kode</th>
           <th style="width:90px">Waktu</th>
