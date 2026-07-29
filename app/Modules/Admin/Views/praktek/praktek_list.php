@@ -55,48 +55,58 @@
     </h2>
     <div id="flt" class="accordion-collapse collapse show">
       <div class="accordion-body">
+        <?php
+          $req = service('request');
+          $getT1         = $req->getGet('t1');
+          $getDepartemen = $req->getGet('departemen');
+          $getT2         = $req->getGet('t2');
+          $getBlok       = $req->getGet('blok');
+          $getT3         = $req->getGet('t3');
+          $getStatus     = $req->getGet('status');
+          $getQ          = $req->getGet('q');
+        ?>
         <form id="filterForm" class="row g-2 align-items-end">
           <div class="col-md-6">
             <select name="t1" class="form-select">
               <option value="">- Semua Kompetensi Utama -</option>
-              <?php foreach($komp as $x): ?><option value="<?= $x['id'] ?>"><?= esc($x['nama']) ?></option><?php endforeach; ?>
+              <?php foreach($komp as $x): ?><option value="<?= $x['id'] ?>" <?= (string)$getT1===(string)$x['id']?'selected':'' ?>><?= esc($x['nama']) ?></option><?php endforeach; ?>
             </select>
           </div>
           <div class="col-md-6">
             <select name="departemen" class="form-select">
               <option value="">- Semua Departemen -</option>
-              <?php foreach($departemen as $x): ?><option value="<?= $x['id'] ?>"><?= esc($x['nama']) ?></option><?php endforeach; ?>
+              <?php foreach($departemen as $x): ?><option value="<?= $x['id'] ?>" <?= (string)$getDepartemen===(string)$x['id']?'selected':'' ?>><?= esc($x['nama']) ?></option><?php endforeach; ?>
             </select>
           </div>
           <div class="col-md-6">
             <select name="t2" class="form-select">
               <option value="">- Semua Penyakit / Kelainan -</option>
-              <?php foreach($sakit as $x): ?><option value="<?= $x['id'] ?>"><?= esc($x['nama']) ?></option><?php endforeach; ?>
+              <?php foreach($sakit as $x): ?><option value="<?= $x['id'] ?>" <?= (string)$getT2===(string)$x['id']?'selected':'' ?>><?= esc($x['nama']) ?></option><?php endforeach; ?>
             </select>
           </div>
           <div class="col-md-6">
             <select name="blok" class="form-select">
               <option value="">- Semua Blok -</option>
-              <?php foreach($blok as $x): ?><option value="<?= $x['id'] ?>"><?= esc($x['nama']) ?></option><?php endforeach; ?>
+              <?php foreach($blok as $x): ?><option value="<?= $x['id'] ?>" <?= (string)$getBlok===(string)$x['id']?'selected':'' ?>><?= esc($x['nama']) ?></option><?php endforeach; ?>
             </select>
           </div>
           <div class="col-md-6">
             <select name="t3" class="form-select">
               <option value="">- Semua Bidang Ilmu -</option>
-              <?php foreach($bidang as $x): ?><option value="<?= $x['id'] ?>"><?= esc($x['nama']) ?></option><?php endforeach; ?>
+              <?php foreach($bidang as $x): ?><option value="<?= $x['id'] ?>" <?= (string)$getT3===(string)$x['id']?'selected':'' ?>><?= esc($x['nama']) ?></option><?php endforeach; ?>
             </select>
           </div>
           <div class="col-md-6">
             <select name="status" class="form-select">
               <option value="">- Semua Status -</option>
               <?php foreach(['draft','review','publish','reject'] as $s): ?>
-                <option value="<?= $s ?>"><?= ucfirst($s) ?></option>
+                <option value="<?= $s ?>" <?= (string)$getStatus===(string)$s?'selected':'' ?>><?= ucfirst($s) ?></option>
               <?php endforeach; ?>
             </select>
           </div>
           <div class="col-12 col-md-6">
             <label class="small mb-0">Pencarian</label>
-            <input class="form-control" name="q" placeholder="Keyword">
+            <input class="form-control" name="q" value="<?= esc($getQ ?? '') ?>" placeholder="Keyword">
           </div>
           <div class="col-12 col-md-6 text-md-end">
             <button class="btn btn-outline-primary"><i class="bi bi-search"></i> Terapkan</button>
@@ -123,12 +133,22 @@
       </div>
       <div class="modal-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <div class="small text-muted">Berikut adalah daftar aspek penilaian.</div>
+          <div class="small text-muted">Klik Hapus untuk menghapus baris.</div>
+          <?php if (($me['role_id'] ?? -1) != 6): ?>
+          <a id="btnTambahOsce" class="btn btn-primary btn-sm" href="#" target="_self">
+            <i class="bi bi-plus-circle me-1"></i> Tambah Data
+          </a>
+          <?php endif; ?>
         </div>
         <div class="table-responsive">
           <table class="table table-sm align-middle" id="tblOsce">
             <thead class="table-light">
-              <tr><th>Aspek</th><th>Keterangan</th></tr>
+              <tr>
+                <?php if (($me['role_id'] ?? -1) != 6): ?>
+                <th style="width:72px">Aksi</th>
+                <?php endif; ?>
+                <th>Aspek</th><th>Keterangan</th>
+              </tr>
             </thead>
             <tbody></tbody>
           </table>
@@ -173,29 +193,32 @@
 
     const $list = $('#praktekList');
 
-    function setCSRFfromXHR(xhr){
-      const tok = xhr && xhr.getResponseHeader ? xhr.getResponseHeader('X-CSRF-TOKEN') : null;
-      if (tok) window.__csrf = tok;
-    }
-
     function buildListURL(){
       const base = '<?= site_url('admin/soal/praktek') ?>';
       return base + '?' + ($('#filterForm').length ? $('#filterForm').serialize() : '');
     }
 
-    function loadList(url){
-      const u = (url || buildListURL()) + ((url || buildListURL()).includes('?') ? '&' : '?') + 'frag=list';
+    function loadList(url, pushState = true){
+      const targetUrl = url || buildListURL();
+      const u = targetUrl + (targetUrl.includes('?') ? '&' : '?') + 'frag=list';
       Loader && Loader.show();
       $.get(u)
       .done(function(html, status, xhr){
         setCSRFfromXHR(xhr);
         $list.html(html);
+        if (pushState && history.pushState && targetUrl !== location.href) {
+          history.pushState(null, '', targetUrl);
+        }
       })
       .fail(function(xhr){
         Swal.fire('Gagal', xhr?.responseText || 'Tidak dapat memuat data', 'error');
       })
       .always(()=> Loader && Loader.hide());
     }
+
+    window.addEventListener('popstate', function() {
+      loadList(location.href, false);
+    });
 
   // Filter submit
     $('#filterForm').on('submit', function(e){

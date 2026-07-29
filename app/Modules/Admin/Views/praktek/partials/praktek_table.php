@@ -42,7 +42,39 @@ function qp($p=[]){ return current_url().'?'.http_build_query(array_merge($_GET,
                <?= (int)($r['aspek_jlh'] ?? 0) ?>
             </a>
           </td>
-          <td><span class="badge bg-<?= $r['status_label']==='publish'?'success':($r['status_label']==='review'?'info':($r['status_label']==='reject'?'danger':'secondary')) ?>"><?= strtoupper($r['status_label'] ?: 'draft') ?></span></td>
+          <td class="text-center">
+            <div class="dropdown">
+              <button class="btn btn-light btn-sm" type="button" data-bs-toggle="dropdown" 
+                      data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false">
+                <i class="bi bi-three-dots-vertical"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                <?php $qs = !empty($_SERVER['QUERY_STRING']) ? '?' . $_SERVER['QUERY_STRING'] : ''; ?>
+                <?php if (($me['role_id'] ?? -1) != 6): ?>
+                  <li>
+                    <a class="dropdown-item" title="Review" href="<?= site_url('admin/soal/praktek/review/'.$r['id']) . esc($qs) ?>">
+                      <i class="bi bi-clipboard-check me-2"></i> Review
+                    </a>
+                  </li>
+                <?php endif; ?>
+                <?php if ($me['role_id']==0 || $me['role_id']==1): ?>
+                  <li>
+                    <a class="dropdown-item" title="Edit" href="<?= site_url('admin/soal/praktek/edit/'.$r['id']) . esc($qs) ?>">
+                      <i class="bi bi-pencil-square me-2"></i> Ubah
+                    </a>
+                  </li>
+                  <li>
+                    <button class="dropdown-item btn-del text-danger" title="Hapus" 
+                            data-url="<?= site_url('admin/soal/praktek/delete/'.$r['id']) ?>"
+                            data-id="<?= (int)$r['id'] ?>">
+                      <i class="bi bi-trash me-2"></i> Hapus
+                    </button>
+                  </li>
+                <?php endif; ?>
+              </ul>
+            </div>
+            <span class="badge bg-<?= $r['status_label']==='publish'?'success':($r['status_label']==='review'?'info':($r['status_label']==='reject'?'danger':'secondary')) ?>"><?= strtoupper($r['status_label'] ?: 'draft') ?></span>
+          </td>
         </tr>
       <?php endforeach; endif; ?>
       </tbody>

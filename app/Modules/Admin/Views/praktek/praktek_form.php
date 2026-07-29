@@ -9,17 +9,27 @@ $canReview = in_array($role, [0,4], true);
 
 $r    = $row ?? [];
 $edit = !empty($r['id']);
+
+$req = service('request');
+$getParams = $req->getGet();
+$baseUrl = site_url('admin/soal/praktek');
+if (!empty($getParams)) {
+    $backUrl = $baseUrl . '?' . http_build_query($getParams);
+} else {
+    $referer = $_SERVER['HTTP_REFERER'] ?? '';
+    $backUrl = ($referer && strpos($referer, $baseUrl) === 0) ? $referer : $baseUrl;
+}
 ?>
 
 <div class="d-flex align-items-center justify-content-between mb-3">
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb mb-0">
-      <li class="breadcrumb-item"><a href="<?= site_url('admin/soal/praktek') ?>">Soal Praktek</a></li>
+      <li class="breadcrumb-item"><a href="<?= esc($backUrl) ?>">Soal Praktek</a></li>
       <li class="breadcrumb-item active"><?= $edit?'Ubah Soal':'Tambah Soal' ?></li>
     </ol>
   </nav>
   <div>
-    <a href="<?= site_url('admin/soal/praktek') ?>" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Kembali</a>
+    <a href="<?= esc($backUrl) ?>" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Kembali</a>
     <button class="btn btn-primary" form="formPraktek"><i class="bi bi-save2"></i> Simpan</button>
   </div>
 </div>
@@ -249,7 +259,7 @@ $('textarea[name="tujuan"], textarea[name="skenario"], textarea[name="tugas_k"],
     $.ajax({url, method:'POST', data:fd, processData:false, contentType:false})
       .done(res=>{
         if(res.csrf_token) window.__csrf=res.csrf_token;
-        if(res.status==='ok'){ swalToast&&swalToast('Disimpan'); setTimeout(()=>location.href='<?= site_url('admin/soal/praktek') ?>',600); }
+        if(res.status==='ok'){ swalToast&&swalToast('Disimpan'); setTimeout(()=>location.href='<?= esc($backUrl) ?>',600); }
         else Swal.fire('Gagal', res.message||'Tidak dapat menyimpan', 'error');
       })
       .fail(xhr=> Swal.fire('Gagal', xhr?.responseJSON?.message||'Tidak dapat menyimpan', 'error'))

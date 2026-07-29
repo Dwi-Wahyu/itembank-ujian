@@ -1,15 +1,27 @@
 <?php $this->extend('\Modules\Admin\Views\layouts\admin'); ?>
-<?php $this->section('content'); $r = $row ?? []; $m = $map ?? []; ?>
+<?php
+$this->section('content'); $r = $row ?? []; $m = $map ?? [];
+
+$req = service('request');
+$getParams = $req->getGet();
+$baseUrl = site_url('admin/soal/praktek');
+if (!empty($getParams)) {
+    $backUrl = $baseUrl . '?' . http_build_query($getParams);
+} else {
+    $referer = $_SERVER['HTTP_REFERER'] ?? '';
+    $backUrl = ($referer && strpos($referer, $baseUrl) === 0) ? $referer : $baseUrl;
+}
+?>
 
 <div class="d-flex align-items-center justify-content-between mb-3">
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb mb-0">
-      <li class="breadcrumb-item"><a href="<?= site_url('admin/soal/praktek') ?>">Soal Praktek</a></li>
+      <li class="breadcrumb-item"><a href="<?= esc($backUrl) ?>">Soal Praktek</a></li>
       <li class="breadcrumb-item active">Review #<?= (int)$r['id'] ?></li>
     </ol>
   </nav>
   <div>
-    <a href="<?= site_url('admin/soal/praktek') ?>" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Kembali</a>
+    <a href="<?= esc($backUrl) ?>" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Kembali</a>
      <?php if ($me['role_id']==0 || $me['role_id']==4) {?>
     <button class="btn btn-primary" id="btnOpenReview"><i class="bi bi-clipboard-check"></i> Tambah Telaah</button>
    <?php }?>

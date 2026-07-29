@@ -272,6 +272,8 @@ class UjianController extends BaseController
             $stations = $data['stations'] ?? $data['soal'] ?? $data['osce_soal'] ?? [];
             $pesertaList = $data['participants'] ?? $data['peserta'] ?? [];
             $mahasiswaList = $data['mahasiswa'] ?? [];
+            $soalPraktekList = $data['soal_praktek'] ?? [];
+            $aspekList = $data['aspek'] ?? [];
 
             // Gunakan Database Transaction
             $this->db->transStart();
@@ -323,7 +325,44 @@ class UjianController extends BaseController
                 $this->db->table('admin_cbt')->insertBatch($pesertaList);
             }
 
-            // 4. Stasiun/Soal OSCE (osce_soal)
+            // 4. Soal Praktek (ujian_praktek)
+            if (!empty($soalPraktekList)) {
+                foreach ($soalPraktekList as $soal) {
+                    $existingSoal = null;
+                    if (!empty($soal['id'])) {
+                        $existingSoal = $this->db->table('ujian_praktek')->where('id', $soal['id'])->get()->getRowArray();
+                    }
+                    if (!$existingSoal && !empty($soal['register'])) {
+                        $existingSoal = $this->db->table('ujian_praktek')->where('register', $soal['register'])->get()->getRowArray();
+                    }
+
+                    if ($existingSoal) {
+                        $this->db->table('ujian_praktek')->where('id', $existingSoal['id'])->update($soal);
+                    } else {
+                        $this->db->table('ujian_praktek')->insert($soal);
+                    }
+                }
+            }
+
+            // 5. Aspek Rubrik Penilaian (aspek)
+            if (!empty($aspekList)) {
+                $soalPraktekIds = array_filter(array_column($soalPraktekList, 'id'));
+                if (!empty($soalPraktekIds)) {
+                    $this->db->table('aspek')->whereIn('soal_id', $soalPraktekIds)->delete();
+                }
+                foreach ($aspekList as $asp) {
+                    if (!empty($asp['id'])) {
+                        $existingAsp = $this->db->table('aspek')->where('id', $asp['id'])->get()->getRowArray();
+                        if ($existingAsp) {
+                            $this->db->table('aspek')->where('id', $asp['id'])->update($asp);
+                            continue;
+                        }
+                    }
+                    $this->db->table('aspek')->insert($asp);
+                }
+            }
+
+            // 6. Stasiun/Soal OSCE (osce_soal)
             if (!empty($stations)) {
                 $this->db->table('osce_soal')->where('osce_id', $idUjian)->delete();
                 foreach ($stations as &$st) {
@@ -334,7 +373,7 @@ class UjianController extends BaseController
                 $this->db->table('osce_soal')->insertBatch($stations);
             }
 
-            // 5. Pindahkan file gambar/media dari hasil ekstrak
+            // 7. Pindahkan file gambar/media dari hasil ekstrak
             $mediaFolders = ['uploads/soal_praktek/', 'uploads/osce_soal/', 'uploads/soal_teori/'];
             foreach ($mediaFolders as $relDir) {
                 $srcMediaDir = $extractPath . $relDir;
@@ -454,8 +493,15 @@ class UjianController extends BaseController
             $this->db->table('buat_teori')->where('kode', $kode_ujian)->delete();
             $this->db->table('admin_cbt')->where('kode', $kode_ujian)->delete();
 
-            if (!empty($data['exam']))         $this->db->table('buat_teori')->insert($data['exam']);
-            if (!empty($data['participants'])) $this->db->table('admin_cbt')->insertBatch($data['participants']);
+            if (!empty($data['exam'])) $this->db->table('buat_teori')->insert($data['exam']);
+            if (!empty($data['participants'])) {
+                $participants = $data['participants'];
+                foreach ($participants as &$p) {
+                    unset($p['id']);
+                }
+                unset($p);
+                $this->db->table('admin_cbt')->insertBatch($participants);
+            }
             if (!empty($data['questions']))    $this->db->table('ujian_teori')->ignore(true)->insertBatch($data['questions']);
             $this->db->transComplete();
 
@@ -567,7 +613,14 @@ class UjianController extends BaseController
             $this->db->table('admin_cbt')->where('kode', $kode)->delete();
 
             if (!empty($data['session']))      $this->db->table('osce')->insert($data['session']);
-            if (!empty($data['participants'])) $this->db->table('admin_cbt')->insertBatch($data['participants']);
+            if (!empty($data['participants'])) {
+                $participants = $data['participants'];
+                foreach ($participants as &$p) {
+                    unset($p['id']);
+                }
+                unset($p);
+                $this->db->table('admin_cbt')->insertBatch($participants);
+            }
             
             // Delete existing station mappings before insertBatch
             if (!empty($data['session']['id'])) {
