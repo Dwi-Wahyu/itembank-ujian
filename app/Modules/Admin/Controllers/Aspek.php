@@ -107,9 +107,9 @@ class Aspek extends BaseController
 
     $data = [
         'soal_id'   => (int)$this->request->getPost('soal_id'),
-        't1'        => $this->request->getPost('t1') ?: null,
-        't2'        => $this->request->getPost('t2') ?: null,
-        't3'        => $this->request->getPost('t3') ?: null,
+        't1'        => (int)($this->request->getPost('t1') ?: 0),
+        't2'        => (int)($this->request->getPost('t2') ?: 0),
+        't3'        => (int)($this->request->getPost('t3') ?: 0),
         'aspek'     => trim((string)$this->request->getPost('aspek')),
         'keterangan'=> (string)$this->request->getPost('keterangan'),
         'file'      => $fileNames ? json_encode($fileNames) : null,
@@ -182,9 +182,9 @@ public function update($id=null)
 
     $data = [
         'soal_id'   => (int)$this->request->getPost('soal_id'),
-        't1'        => $this->request->getPost('t1') ?: null,
-        't2'        => $this->request->getPost('t2') ?: null,
-        't3'        => $this->request->getPost('t3') ?: null,
+        't1'        => (int)($this->request->getPost('t1') ?: 0),
+        't2'        => (int)($this->request->getPost('t2') ?: 0),
+        't3'        => (int)($this->request->getPost('t3') ?: 0),
         'aspek'     => trim((string)$this->request->getPost('aspek')),
         'keterangan'=> (string)$this->request->getPost('keterangan'),
         'file'      => $allFiles ? json_encode($allFiles) : null,
