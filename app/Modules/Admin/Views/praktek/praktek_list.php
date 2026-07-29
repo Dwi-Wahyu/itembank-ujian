@@ -198,16 +198,27 @@
       return base + '?' + ($('#filterForm').length ? $('#filterForm').serialize() : '');
     }
 
+    function cleanListURL(url) {
+      try {
+        const u = new URL(url, location.origin);
+        u.searchParams.delete('frag');
+        return u.pathname + u.search + u.hash;
+      } catch(e) {
+        return (url || '').replace(/([?&])frag=[^&]*&?/, '$1').replace(/[?&]$/, '');
+      }
+    }
+
     function loadList(url, pushState = true){
-      const targetUrl = url || buildListURL();
-      const u = targetUrl + (targetUrl.includes('?') ? '&' : '?') + 'frag=list';
+      const rawUrl = url || buildListURL();
+      const cleanUrl = cleanListURL(rawUrl);
+      const u = cleanUrl + (cleanUrl.includes('?') ? '&' : '?') + 'frag=list';
       Loader && Loader.show();
       $.get(u)
       .done(function(html, status, xhr){
         setCSRFfromXHR(xhr);
         $list.html(html);
-        if (pushState && history.pushState && targetUrl !== location.href) {
-          history.pushState(null, '', targetUrl);
+        if (pushState && history.pushState && cleanUrl !== location.href) {
+          history.pushState(null, '', cleanUrl);
         }
       })
       .fail(function(xhr){

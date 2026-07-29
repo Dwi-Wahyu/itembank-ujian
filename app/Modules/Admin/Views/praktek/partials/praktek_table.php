@@ -1,6 +1,10 @@
 <?php
 $pages = max(1, (int)ceil(($total ?: 0) / ($per ?: 10)));
-function qp($p=[]){ return current_url().'?'.http_build_query(array_merge($_GET,$p)); }
+function qp($p=[]){ 
+    $get = $_GET;
+    unset($get['frag']);
+    return current_url().'?'.http_build_query(array_merge($get, $p)); 
+}
 ?>
 <div class="card">
   <div class="table-responsive">
