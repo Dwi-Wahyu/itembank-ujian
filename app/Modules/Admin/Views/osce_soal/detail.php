@@ -27,7 +27,7 @@
 
 <div class="d-flex align-items-center justify-content-between mb-3">
   <h2 class="page-title mb-0">Detail Station</h2>
-  <a href="<?= site_url('admin/osce-soal') ?>" class="btn btn-outline-secondary">
+  <a href="<?= !empty($station['osce_id']) ? site_url('admin/ujian/praktek/detail/' . $station['osce_id'] . '#station') : site_url('admin/osce-soal') ?>" class="btn btn-outline-secondary">
     <i class="bi bi-arrow-left me-1"></i> Kembali
   </a>
 </div>
@@ -55,40 +55,57 @@
 </div>
 
 <div class="card">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <strong>Mahasiswa Terdaftar (Kode: <?= esc($station['osce_kode']) ?>)</strong>
-    <span class="badge bg-secondary"><?= count($mhs) ?> peserta</span>
+  <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <strong>Mahasiswa Terdaftar (Kode: <?= esc($station['osce_kode']) ?>)</strong>
+      <span class="badge bg-secondary ms-1"><?= count($mhs) ?> peserta</span>
+    </div>
+    <a href="<?= site_url('admin/osce-soal/export-pdf/' . $station['id']) ?>" target="_blank" class="btn btn-sm btn-outline-danger">
+      <i class="bi bi-file-earmark-pdf me-1"></i> Ekspor PDF
+    </a>
   </div>
   <div class="table-responsive">
     <table class="table table-striped table-hover align-middle mb-0">
       <thead class="table-light">
         <tr>
-          <th style="width:60px">#</th>
-          <th style="min-width:140px">NIM</th>
-          <th style="min-width:260px">Nama</th>
-          <th style="min-width:120px">Kelas</th>
-          <th style="width:120px">Aksi</th>
-          
+          <th style="width:50px">#</th>
+          <th style="min-width:120px">NIM</th>
+          <th style="min-width:200px">Nama</th>
+          <th style="min-width:80px">Kelas</th>
+          <th style="min-width:100px" class="text-center">Global Skor</th>
+          <th style="min-width:110px" class="text-center">GPS</th>
+          <th style="min-width:180px">Keterangan</th>
+          <th style="width:100px">Aksi</th>
         </tr>
       </thead>
       <tbody>
         <?php if(empty($mhs)): ?>
-          <tr><td colspan="7" class="text-center text-muted py-4">Belum ada mahasiswa terdaftar.</td></tr>
+          <tr><td colspan="8" class="text-center text-muted py-4">Belum ada mahasiswa terdaftar.</td></tr>
         <?php else: $i=1; foreach($mhs as $row): ?>
           <tr>
             <td><?= $i++ ?></td>
             <td><?= esc($row['nim']) ?></td>
             <td><?= esc($row['nama']) ?></td>
             <td><?= esc($row['kelas'] ?? '-') ?></td>
+            <td class="text-center"><?= is_null($row['global_skor']) ? '-' : (float)$row['global_skor'] ?></td>
+            <td class="text-center">
+              <?php
+                $gpsBadge = 'secondary';
+                if ((string)$row['gps'] === '2') $gpsBadge = 'success';
+                elseif ((string)$row['gps'] === '1') $gpsBadge = 'warning';
+                elseif ((string)$row['gps'] === '0') $gpsBadge = 'danger';
+              ?>
+              <span class="badge bg-<?= $gpsBadge ?>"><?= esc($row['gps_text'] ?: '-') ?></span>
+            </td>
+            <td><?= esc($row['keterangan'] ?: '-') ?></td>
             <td>
               <button
               class="btn btn-sm btn-outline-info btn-history"
               data-station="<?= (int)$station['id'] ?>"
-              data-mid="<?= (int)($row['mahasiswa_id'] ?? $row['id']) // pastikan controller alias m.id AS mahasiswa_id ?>">
+              data-mid="<?= (int)($row['mahasiswa_id'] ?? $row['id']) ?>">
               <i class="bi bi-clock-history me-1"></i> History
             </button>
           </td>
-
         </tr>
       <?php endforeach; endif; ?>
     </tbody>

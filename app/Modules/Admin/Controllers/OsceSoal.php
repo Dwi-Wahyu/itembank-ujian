@@ -253,11 +253,9 @@ public function optionsPengawas()
 }
 public function detail($id)
     {
-       
-
         // Detail station (osce_soal) + info OSCE
         $station = $this->db->table('osce_soal s')
-            ->select('s.*, o.id as osce_id, o.kode as osce_kode, s.nama_station as osce_nama, o.tanggal as osce_tanggal')
+            ->select('s.*, o.id as osce_id, o.kode as osce_kode, o.nama_ujian as osce_nama, o.tanggal as osce_tanggal')
             ->join('osce o', 'o.id = s.osce_id', 'left')
             ->where('s.id', (int)$id)
             ->get()->getRowArray();
@@ -266,11 +264,19 @@ public function detail($id)
             throw PageNotFoundException::forPageNotFound('Station tidak ditemukan');
         }
 
-        // Daftar mahasiswa terdaftar untuk kode OSCE tsb
-        // join sesuai permintaan: osce_soal.osce_id = osce.id, osce.kode = admin_cbt.kode, admin_cbt.id_mahasiswa = mahasiswa.id
+        // Daftar mahasiswa terdaftar + nilai untuk station ini
         $mhs = $this->db->table('admin_cbt ac')
-            ->select('m.id, m.nim, m.nama, m.kelas, ac.id as reg_id')
+            ->select('m.id, m.nim, m.nama, m.kelas, ac.id as reg_id, jo.global_skor, jo.gps, jo.keterangan')
+            ->select("
+                CASE CAST(jo.gps AS UNSIGNED)
+                  WHEN 0 THEN 'Tidak Lulus'
+                  WHEN 1 THEN 'Borderline'
+                  WHEN 2 THEN 'Lulus'
+                  ELSE '-'
+                END AS gps_text
+            ", false)
             ->join('mahasiswa m', 'm.id = ac.id_mahasiswa', 'left')
+            ->join('jawaban_osce jo', 'jo.osce_id = ' . (int)$station['osce_id'] . ' AND jo.soal_id = ' . (int)$station['soal_id'] . ' AND jo.mahasiswa_id = m.id', 'left')
             ->where('ac.kode', $station['osce_kode'])
             ->orderBy('m.nama', 'asc')
             ->get()->getResultArray();
@@ -597,6 +603,136 @@ public function historyMahasiswaPdf($mahasiswaId)
         ->setContentType('application/pdf')
         ->setHeader('Cache-Control','private, max-age=0, must-revalidate')
         ->setHeader('Pragma','public')
+        ->setBody($dompdf->output());
+}
+
+public function exportStationPdf($stationId)
+{
+    helper(['date', 'text']);
+    $stationId = (int)$stationId;
+
+    $station = $this->db->table('osce_soal s')
+        ->select('s.*, o.id as osce_id, o.kode as osce_kode, o.nama_ujian as osce_nama, o.tanggal as osce_tanggal')
+        ->join('osce o', 'o.id = s.osce_id', 'left')
+        ->where('s.id', $stationId)
+        ->get()->getRowArray();
+
+    if (!$station) {
+        return $this->response->setStatusCode(404)->setBody('Station tidak ditemukan');
+    }
+
+    $mhs = $this->db->table('admin_cbt ac')
+        ->select('m.id, m.nim, m.nama, m.kelas, ac.id as reg_id, jo.global_skor, jo.gps, jo.keterangan')
+        ->select("
+            CASE CAST(jo.gps AS UNSIGNED)
+              WHEN 0 THEN 'Tidak Lulus'
+              WHEN 1 THEN 'Borderline'
+              WHEN 2 THEN 'Lulus'
+              ELSE '-'
+            END AS gps_text
+        ", false)
+        ->join('mahasiswa m', 'm.id = ac.id_mahasiswa', 'left')
+        ->join('jawaban_osce jo', 'jo.osce_id = ' . (int)$station['osce_id'] . ' AND jo.soal_id = ' . (int)$station['soal_id'] . ' AND jo.mahasiswa_id = m.id', 'left')
+        ->where('ac.kode', $station['osce_kode'])
+        ->orderBy('m.nama', 'asc')
+        ->get()->getResultArray();
+
+    $logoPath = FCPATH . 'assets/img/logo_unhas.png';
+    $logoData = '';
+    if (file_exists($logoPath)) {
+        $type = pathinfo($logoPath, PATHINFO_EXTENSION);
+        $data = file_get_contents($logoPath);
+        $logoData = 'data:image/' . $type . ';base64,' . base64_encode($data);
+    }
+
+    $html = '
+      <table width="100%" style="border-bottom:3px solid #000;margin-bottom:6px">
+        <tr>
+          <td width="80">
+            ' . ($logoData ? '<img src="' . $logoData . '" style="height:60px">' : '') . '
+          </td>
+          <td style="text-align:center;font-weight:bold;font-size:11pt">
+            KEMENTERIAN RISET, TEKNOLOGI, DAN PENDIDIKAN TINGGI<br>
+            UNIVERSITAS HASANUDDIN<br>
+            FAKULTAS KEDOKTERAN GIGI<br>
+            <div style="font-weight:normal;font-size:9pt">
+              Jl. Perintis Kemerdekaan KM. 10 Makassar 90245 Tlp: (0411) 586012 Web: dent.unhas.ac.id
+            </div>
+          </td>
+        </tr>
+      </table>
+      <div style="text-align:center;font-weight:bold;margin:8px 0 12px 0;font-size:12pt">
+        LAPORAN HASIL UJIAN OSCE - PER STATION
+      </div>
+
+      <table width="100%" cellspacing="2" cellpadding="2" style="font-size:10pt;margin-bottom:12px;border:1px solid #ccc;padding:6px">
+        <tr>
+          <td style="width:16%;font-weight:bold">OSCE</td><td style="width:2%">:</td><td style="width:32%">' . esc($station['osce_nama'] ?? '-') . '</td>
+          <td style="width:18%;font-weight:bold">Nama Station</td><td style="width:2%">:</td><td>' . esc($station['nama_station'] ?? '-') . '</td>
+        </tr>
+        <tr>
+          <td style="font-weight:bold">Kode OSCE</td><td>:</td><td>' . esc($station['osce_kode'] ?? '-') . '</td>
+          <td style="font-weight:bold">Kode Station</td><td>:</td><td>' . esc($station['kode'] ?? '-') . '</td>
+        </tr>
+        <tr>
+          <td style="font-weight:bold">Tanggal</td><td>:</td><td>' . (function_exists('tgl_id') ? tgl_id($station['osce_tanggal']) : esc($station['osce_tanggal'] ?? '-')) . '</td>
+          <td style="font-weight:bold">Penguji</td><td>:</td><td>' . esc(($station['nip_pengawas'] ?? '') . ' - ' . ($station['nama_pengawas'] ?? '')) . '</td>
+        </tr>
+      </table>
+
+      <table width="100%" border="1" cellspacing="0" cellpadding="4" style="border-collapse:collapse;font-size:10pt">
+        <thead>
+          <tr style="background:#e9f2ff">
+            <th style="width:30px;text-align:center">No</th>
+            <th style="width:110px">NIM</th>
+            <th>Nama Mahasiswa</th>
+            <th style="width:50px;text-align:center">Kelas</th>
+            <th style="width:75px;text-align:center">Global Skor</th>
+            <th style="width:85px;text-align:center">GPS</th>
+            <th style="width:130px">Keterangan</th>
+          </tr>
+        </thead>
+        <tbody>';
+
+    if (empty($mhs)) {
+        $html .= '<tr><td colspan="7" style="text-align:center;padding:8px">Belum ada peserta terdaftar.</td></tr>';
+    } else {
+        $i = 1;
+        foreach ($mhs as $row) {
+            $html .= '<tr>
+              <td style="text-align:center">' . $i++ . '</td>
+              <td>' . esc($row['nim']) . '</td>
+              <td>' . esc($row['nama']) . '</td>
+              <td style="text-align:center">' . esc($row['kelas'] ?? '-') . '</td>
+              <td style="text-align:center">' . (is_null($row['global_skor']) ? '-' : (float)$row['global_skor']) . '</td>
+              <td style="text-align:center">' . esc($row['gps_text'] ?: '-') . '</td>
+              <td>' . esc($row['keterangan'] ?: '-') . '</td>
+            </tr>';
+        }
+    }
+
+    $html .= '</tbody></table>';
+
+    while (ob_get_level() > 0) { ob_end_clean(); }
+
+    $opts = new \Dompdf\Options();
+    $opts->set('isRemoteEnabled', true);
+    $opts->set('isHtml5ParserEnabled', true);
+    $opts->set('defaultFont', 'DejaVu Sans');
+
+    $dompdf = new \Dompdf\Dompdf($opts);
+    $dompdf->setPaper('A4', 'portrait');
+    $dompdf->loadHtml(
+        '<style>
+           body{font-family:DejaVu Sans, Arial, sans-serif;font-size:11pt}
+         </style>' . $html
+    );
+    $dompdf->render();
+
+    return $this->response
+        ->setContentType('application/pdf')
+        ->setHeader('Cache-Control', 'private, max-age=0, must-revalidate')
+        ->setHeader('Pragma', 'public')
         ->setBody($dompdf->output());
 }
 

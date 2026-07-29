@@ -397,6 +397,14 @@ $station_id=(int)$uji['id']
       loadStation();
     });
 
+    if (window.location.hash === '#station' || new URLSearchParams(window.location.search).get('tab') === 'station') {
+      const tabEl = document.getElementById('station-tab');
+      if (tabEl) {
+        const tab = bootstrap.Tab.getOrCreateInstance(tabEl);
+        tab.show();
+      }
+    }
+
     function buildSoalSelect($el, parent){
       $el.select2({
         width: '100%',

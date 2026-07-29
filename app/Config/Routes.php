@@ -185,6 +185,7 @@ $routes->group('admin', ['namespace' => 'Modules\Admin\Controllers'], static fun
         $routes->post('osce-soal/update/(:num)',  'OsceSoal::update/$1');
         $routes->post('osce-soal/delete/(:num)',  'OsceSoal::delete/$1');
         $routes->get('osce-soal/detail/(:num)', 'OsceSoal::detail/$1');
+        $routes->get('osce-soal/export-pdf/(:num)', 'OsceSoal::exportStationPdf/$1');
         $routes->get('osce-soal/history-mahasiswa/(:num)', 'OsceSoal::historyMahasiswa/$1');
         $routes->post('osce-soal/delete-multiple', 'OsceSoal::deleteMultiple');
 
