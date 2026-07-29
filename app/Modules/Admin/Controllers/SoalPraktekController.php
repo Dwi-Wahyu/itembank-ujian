@@ -32,8 +32,8 @@ public function index()
     $data += $this->buildQuery();
     $data['menuActive'] = 'soal_praktek';
 
-    // >>> kunci: kalau dipanggil AJAX dengan frag=list, kirim partial tabel
-    if ($this->request->getGet('frag') === 'list') {
+    // >>> kunci: kalau dipanggil via AJAX dengan frag=list, kirim partial tabel
+    if ($this->request->isAJAX() && $this->request->getGet('frag') === 'list') {
         return view('\Modules\Admin\Views\praktek\partials\praktek_table', $data);
     }
 
