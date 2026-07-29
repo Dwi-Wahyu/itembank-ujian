@@ -92,6 +92,7 @@ class OsceSoal extends BaseController
     } else {
         $row['waktu_menit'] = 0;
     }
+    $row['waktu'] = $row['waktu_menit'];
 
     return $this->response->setHeader('X-CSRF-TOKEN', csrf_hash())
         ->setJSON(['status'=>'ok','data'=>$row,'csrf_token'=>csrf_hash()]);
@@ -684,18 +685,17 @@ public function exportStationPdf($stationId)
         <thead>
           <tr style="background:#e9f2ff">
             <th style="width:30px;text-align:center">No</th>
-            <th style="width:110px">NIM</th>
+            <th style="width:120px">NIM</th>
             <th>Nama Mahasiswa</th>
-            <th style="width:50px;text-align:center">Kelas</th>
-            <th style="width:75px;text-align:center">Global Skor</th>
-            <th style="width:85px;text-align:center">GPS</th>
-            <th style="width:130px">Keterangan</th>
+            <th style="width:80px;text-align:center">Global Skor</th>
+            <th style="width:90px;text-align:center">GPS</th>
+            <th style="width:140px">Keterangan</th>
           </tr>
         </thead>
         <tbody>';
 
     if (empty($mhs)) {
-        $html .= '<tr><td colspan="7" style="text-align:center;padding:8px">Belum ada peserta terdaftar.</td></tr>';
+        $html .= '<tr><td colspan="6" style="text-align:center;padding:8px">Belum ada peserta terdaftar.</td></tr>';
     } else {
         $i = 1;
         foreach ($mhs as $row) {
@@ -703,7 +703,6 @@ public function exportStationPdf($stationId)
               <td style="text-align:center">' . $i++ . '</td>
               <td>' . esc($row['nim']) . '</td>
               <td>' . esc($row['nama']) . '</td>
-              <td style="text-align:center">' . esc($row['kelas'] ?? '-') . '</td>
               <td style="text-align:center">' . (is_null($row['global_skor']) ? '-' : (float)$row['global_skor']) . '</td>
               <td style="text-align:center">' . esc($row['gps_text'] ?: '-') . '</td>
               <td>' . esc($row['keterangan'] ?: '-') . '</td>

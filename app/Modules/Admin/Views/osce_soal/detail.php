@@ -70,23 +70,21 @@
         <tr>
           <th style="width:50px">#</th>
           <th style="min-width:120px">NIM</th>
-          <th style="min-width:200px">Nama</th>
-          <th style="min-width:80px">Kelas</th>
-          <th style="min-width:100px" class="text-center">Global Skor</th>
-          <th style="min-width:110px" class="text-center">GPS</th>
+          <th style="min-width:220px">Nama</th>
+          <th style="min-width:110px" class="text-center">Global Skor</th>
+          <th style="min-width:120px" class="text-center">GPS</th>
           <th style="min-width:180px">Keterangan</th>
           <th style="width:100px">Aksi</th>
         </tr>
       </thead>
       <tbody>
         <?php if(empty($mhs)): ?>
-          <tr><td colspan="8" class="text-center text-muted py-4">Belum ada mahasiswa terdaftar.</td></tr>
+          <tr><td colspan="7" class="text-center text-muted py-4">Belum ada mahasiswa terdaftar.</td></tr>
         <?php else: $i=1; foreach($mhs as $row): ?>
           <tr>
             <td><?= $i++ ?></td>
             <td><?= esc($row['nim']) ?></td>
             <td><?= esc($row['nama']) ?></td>
-            <td><?= esc($row['kelas'] ?? '-') ?></td>
             <td class="text-center"><?= is_null($row['global_skor']) ? '-' : (float)$row['global_skor'] ?></td>
             <td class="text-center">
               <?php
