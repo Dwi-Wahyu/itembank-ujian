@@ -8,6 +8,7 @@ function qurl_part($p=[]){ return current_url().'?'.http_build_query(array_merge
     <table class="table table-sm align-middle mb-0">
       <thead class="table-light">
         <tr>
+          <th style="width:100px">Aksi</th>
           <th class="col-reg">No. Register</th>
           <th class="col-format">Format</th>
           <th class="col-vignette">Vignette</th>
@@ -17,12 +18,22 @@ function qurl_part($p=[]){ return current_url().'?'.http_build_query(array_merge
       </thead>
       <tbody>
       <?php if (empty($rows)): ?>
-        <tr><td colspan="5" class="text-center text-muted py-4">Tidak ada data.</td></tr>
+        <tr><td colspan="6" class="text-center text-muted py-4">Tidak ada data.</td></tr>
       <?php else: foreach ($rows as $r):
         $fmt   = 'ABCDE';
         $badge = '<span class="badge bg-secondary">'.strtoupper($r['status'] ?: 'draft').'</span>';
       ?>
         <tr>
+          <td>
+            <div class="btn-group btn-group-sm">
+              <a href="<?= site_url('admin/soal/teori/edit/' . $r['id']) ?>" class="btn btn-sm btn-outline-primary" title="Edit Soal">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <button type="button" class="btn btn-sm btn-outline-danger btn-del" data-url="<?= site_url('admin/soal/teori/delete/' . $r['id']) ?>" title="Hapus Soal">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
           <td class="col-reg"><?= esc($r['register'] ?: '-') ?></td>
           <td class="col-format"><?= $fmt ?></td>
           <td class="col-vignette"><div class="clamp-3"><?= esc(strip_tags($r['vignette'] ?? '')) ?></div></td>

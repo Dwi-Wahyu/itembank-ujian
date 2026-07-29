@@ -432,6 +432,31 @@ $f = $filters ?? []; ?>
     });
   });
 
+  // Delete Soal Teori
+  $(document).on('click', '.btn-del', function() {
+    const url = $(this).data('url');
+    Swal.fire({
+      title: 'Hapus soal ini?',
+      text: 'Data soal teori akan dihapus permanen.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Ya, hapus',
+      cancelButtonText: 'Batal'
+    }).then(r => {
+      if (!r.isConfirmed) return;
+      Loader && Loader.show();
+      $.post(url, { '<?= csrf_token() ?>': (window.__csrf || '<?= csrf_hash() ?>') })
+      .done(function(res, _, xhr) {
+        if (typeof setCSRFfromXHR === 'function') setCSRFfromXHR(xhr);
+        if (res.csrf_token) window.__csrf = res.csrf_token;
+        swalToast && swalToast('Soal dihapus');
+        loadList();
+      })
+      .fail(xhr => Swal.fire('Gagal', xhr?.responseJSON?.message || 'Tidak dapat menghapus', 'error'))
+      .always(() => Loader && Loader.hide());
+    });
+  });
+
 })();
 </script>
 

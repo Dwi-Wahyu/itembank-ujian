@@ -261,9 +261,11 @@ public function aspekDelete()
 
     public function delete(int $id): ResponseInterface
     {
-        $this->db->table('ujian_praktek')->where('id',$id)->delete();
+        $this->db->table('aspek')->where('soal_id', $id)->delete();
+        $this->db->table('osce_soal')->where('soal_id', $id)->delete();
+        $this->db->table('ujian_praktek')->where('id', $id)->delete();
         return $this->response->setHeader('X-CSRF-TOKEN', csrf_hash())
-            ->setJSON(['status'=>'ok','csrf_token'=>csrf_hash()]);
+            ->setJSON(['status'=>'ok', 'message'=>'Soal praktek berhasil dihapus', 'csrf_token'=>csrf_hash()]);
     }
 
     /* ===================== UPLOAD GAMBAR (AJAX) ===================== */
