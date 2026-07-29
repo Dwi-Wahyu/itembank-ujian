@@ -121,26 +121,26 @@ public function aspekDelete()
         return $this->response->setStatusCode(405)
             ->setJSON(['status'=>'error','message'=>'Metode tidak diizinkan','csrf_token'=>csrf_hash()]);
     }
-    $id = (int)$this->request->getPost('id');
+    $id = (int)($this->request->getPost('id') ?: $this->request->getUri()->getSegment(4));
     if ($id <= 0) {
         return $this->response->setStatusCode(422)
             ->setJSON(['status'=>'error','message'=>'ID tidak valid','csrf_token'=>csrf_hash()]);
     }
 
-    $row = $this->db->table('osce')->where('id',$id)->get()->getRowArray();
+    $row = $this->db->table('aspek')->where('id',$id)->get()->getRowArray();
     if (!$row) {
         return $this->response->setStatusCode(404)
             ->setJSON(['status'=>'error','message'=>'Data tidak ditemukan','csrf_token'=>csrf_hash()]);
     }
 
-    $this->db->table('osce')->where('id',$id)->delete();
+    $this->db->table('aspek')->where('id',$id)->delete();
 
     // hitung ulang jumlah aspek dari tabel aspek
     $jlh = (int)$this->db->table('aspek')->where('soal_id', (int)$row['soal_id'])->countAllResults();
 
     return $this->response
         ->setHeader('X-CSRF-TOKEN', csrf_hash())
-        ->setJSON(['status'=>'ok','message'=>'Berhasil dihapus','soal_id'=>$row['soal_id'],'jlh'=>$jlh,'csrf_token'=>csrf_hash()]);
+        ->setJSON(['status'=>'ok','message'=>'Berhasil dihapus','soal_id'=>(int)$row['soal_id'],'jlh'=>$jlh,'csrf_token'=>csrf_hash()]);
 }
 
 

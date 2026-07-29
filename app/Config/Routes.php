@@ -173,6 +173,8 @@ $routes->group('admin', ['namespace' => 'Modules\Admin\Controllers'], static fun
         $routes->post('aspek/create',     'Aspek::create');
         $routes->get('aspek/edit/(:num)', 'Aspek::edit/$1');
         $routes->post('aspek/update/(:num)','Aspek::update/$1');
+        $routes->post('aspek/delete',     'Aspek::delete');
+        $routes->post('aspek/delete/(:num)', 'Aspek::delete/$1');
         $routes->get('aspek/get/(:num)',  'Aspek::get/$1');
 
         // OSCE Soal

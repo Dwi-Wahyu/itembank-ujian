@@ -199,13 +199,18 @@ public function update($id=null)
     public function delete($id=null)
     {
         if (!$this->request->is('post')) return $this->fail405();
-        $id = (int)$id;
+        $id = (int)($id ?: $this->request->getPost('id'));
         if ($id<=0) return $this->fail422('ID tidak valid');
 
+        $row = $this->aspek->find($id);
+        if (!$row) return $this->response->setStatusCode(404)->setJSON(['status'=>'error','message'=>'Data tidak ditemukan','csrf_token'=>csrf_hash()]);
+
         $this->aspek->delete($id);
+        $soalId = (int)($row['soal_id'] ?? 0);
+        $jlh = $soalId ? (int)$this->aspek->where('soal_id', $soalId)->countAllResults() : 0;
 
         return $this->response->setHeader('X-CSRF-TOKEN', csrf_hash())
-            ->setJSON(['status'=>'ok','csrf_token'=>csrf_hash()]);
+            ->setJSON(['status'=>'ok','soal_id'=>$soalId,'jlh'=>$jlh,'csrf_token'=>csrf_hash()]);
     }
 
     public function get($id=null)
