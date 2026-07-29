@@ -389,8 +389,6 @@ $station_id=(int)$uji['id']
       Loader.show();
       $.get(u, function(html) {
         $wrapStation.html(html);
-        // Sembunyikan kolom "OSCE / Kode" karena sudah berada di detail OSCE tersebut
-        $wrapStation.find('th:nth-child(3), td:nth-child(3)').hide();
       }).always(() => Loader.hide());
     }
 

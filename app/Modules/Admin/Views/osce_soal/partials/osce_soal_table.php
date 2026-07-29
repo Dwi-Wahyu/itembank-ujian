@@ -8,21 +8,18 @@ function qp($p=[]){ return current_url().'?'.http_build_query(array_merge($_GET,
       <thead class="table-light">
         <tr>
           <th style="width:110px">#</th>
-          <th style="width:120px">Kode</th>
-          <th style="width:200px">Soal</th>
+          <th>Nama Station</th>
+          <th style="width:120px">Kode Station</th>
+          <th style="width:220px">No. Soal</th>
           <th>NIP Penguji</th>
           <th>Nama Penguji</th>
-          <th>Station</th>
-          <th style="width:90px">Kode</th>
-          <th style="width:90px">Waktu</th>
-          <th style="width:160px">Created</th>
         </tr>
       </thead>
 
       <tbody>
         <?php if(empty($rows)): ?>
           <tr>
-            <td colspan="9" class="text-center text-muted py-4">Tidak ada data.</td>
+            <td colspan="6" class="text-center text-muted py-4">Tidak ada data.</td>
           </tr>
         <?php else: foreach($rows as $r): ?>
           <tr>
@@ -42,20 +39,11 @@ function qp($p=[]){ return current_url().'?'.http_build_query(array_merge($_GET,
           </button>
         </div>
       </td>
-      <td class="text-wrap"><?= esc($r['kode'] ?? ('#'.$r['osce_id'])) ?></td>
-      <td class="text-wrap"><?= esc($r['soal_register'] ?? ('#'.$r['soal_id'])) ?></td>
-      <td class="text-wrap"><?= esc($r['nip_pengawas']) ?></td>
-      <td class="text-wrap"><?= esc($r['nama_pengawas']) ?></td>
       <td class="text-wrap"><?= esc($r['nama_station']) ?></td>
       <td><?= esc($r['kode']) ?></td>
-      <td>
-        <?php
-          $parts = explode(':', $r['waktu'] ?? '00:00:00');
-          $min   = ((int)$parts[0] * 60) + (int)($parts[1] ?? 0);
-          echo $min . ' mnt';
-        ?>
-      </td>
-      <td><small><?= esc($r['created_at']) ?></small></td>
+      <td class="text-wrap"><?= esc($r['soal_register'] ?: ('#'.$r['soal_id'])) ?></td>
+      <td class="text-wrap"><?= esc($r['nip_pengawas']) ?></td>
+      <td class="text-wrap"><?= esc($r['nama_pengawas']) ?></td>
     </tr>
   <?php endforeach; endif; ?>
 </tbody>
