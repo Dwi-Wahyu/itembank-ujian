@@ -155,7 +155,7 @@ class AuthController extends BaseController
     return $this->response->setJSON([
         'status'     => 'ok',
         'message'    => 'Login admin berhasil',
-        'redirect'   => base_url('admin/sync/auto'),
+        'redirect' => base_url('admin/dashboard'),
         'csrf_token' => csrf_hash(),
     ]);
 }
