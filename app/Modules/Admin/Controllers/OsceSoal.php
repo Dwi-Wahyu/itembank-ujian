@@ -663,7 +663,7 @@ public function exportStationPdf($stationId)
         </tr>
       </table>
       <div style="text-align:center;font-weight:bold;margin:8px 0 12px 0;font-size:12pt">
-        LAPORAN HASIL UJIAN OSCE - PER STATION
+        LAPORAN HASIL UJIAN OSCE
       </div>
 
       <table width="100%" cellspacing="2" cellpadding="2" style="font-size:10pt;margin-bottom:12px;border:1px solid #ccc;padding:6px">
