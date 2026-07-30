@@ -14,18 +14,25 @@ $station_id=(int)$uji['id']
 </div>
 
 <div class="card mb-3">
-  <div class="card-body p-0">
-    <div class="card-body d-flex gap-3">
-        <button id="btn-push-results" class="btn btn-warning px-4">
-            <i class="fa fa-upload"></i> Kirim Hasil Ujian
-        </button>
+  <div class="card-body">
+    <div class="d-flex gap-2 mb-3 flex-wrap">
+      <button id="btn-push-results" class="btn btn-warning px-4">
+        <i class="fa fa-upload me-1"></i> Kirim Hasil Ujian
+      </button>
+      <a href="<?= site_url('admin/ujian/praktek/export-pdf/' . $uji['id']) ?>" class="btn btn-danger px-4" target="_blank">
+        <i class="bi bi-file-earmark-pdf me-1"></i> Export Hasil Ujian
+      </a>
     </div>
-    <table class="table table-sm mb-0">
-      <tr><th class="w-25">Departemen</th><td class="text-end"><?= esc($dep) ?></td></tr>
-      <tr><th>Blok</th><td class="text-end"><?= esc($blok) ?></td></tr>
-      <tr><th>Tanggal</th><td class="text-end"><?= tgl_id($uji['tanggal']) ?></td></tr>
-      <tr><th>Jlh. Peserta</th><td class="text-end" id="jmlPeserta"><?= (int)$jumlah ?></td></tr>
-    </table>
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0">
+        <tbody>
+          <tr><th class="w-25 text-muted">Departemen</th><td class="text-end fw-semibold"><?= esc($dep) ?></td></tr>
+          <tr><th class="text-muted">Blok</th><td class="text-end fw-semibold"><?= esc($blok) ?></td></tr>
+          <tr><th class="text-muted">Tanggal</th><td class="text-end fw-semibold"><?= tgl_id($uji['tanggal']) ?></td></tr>
+          <tr><th class="text-muted">Jlh. Peserta</th><td class="text-end fw-semibold" id="jmlPeserta"><?= (int)$jumlah ?></td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 

@@ -99,6 +99,7 @@ $routes->group('admin', ['namespace' => 'Modules\Admin\Controllers'], static fun
         $routes->get ('ujian/praktek/get/(:num)',   'UjianController::praktekGet/$1');    // load data edit
         $routes->post('ujian/praktek/update/(:num)','UjianController::praktekUpdate/$1'); // submit edit
         $routes->get ('ujian/praktek/detail/(:num)','UjianController::praktekDetail/$1'); // detail
+        $routes->get ('ujian/praktek/export-pdf/(:num)','UjianController::exportPraktekPdf/$1'); // pdf export
         $routes->get ('ujian/praktek/peserta/(:segment)', 'UjianController::pesertaOsceTable/$1');
         $routes->get ('ujian/praktek/pilih-mahasiswa/(:segment)', 'UjianController::pilihMahasiswa/$1');
         $routes->post('ujian/praktek/peserta-add/(:segment)/(:num)', 'UjianController::pesertaAdd/$1/$2');

@@ -1280,6 +1280,179 @@ class UjianController extends BaseController
         ]);
     }
 
+    public function exportPraktekPdf($id)
+    {
+        helper(['date', 'text']);
+        $id = (int)$id;
+
+        $uji = $this->db->table('osce')->where('id', $id)->get()->getRowArray();
+        if (!$uji) {
+            return $this->response->setStatusCode(404)->setBody('Ujian OSCE tidak ditemukan');
+        }
+
+        $depId = $uji['departemen_id'] ?? $uji['departemen'] ?? 0;
+        $dep = !empty($depId) ? $this->db->table('departemen')->select('nama')->where('id', (int)$depId)->get()->getRowArray() : null;
+        $blok = !empty($uji['blok']) ? $this->db->table('blok')->select('nama')->where('id', (int)$uji['blok'])->get()->getRowArray() : null;
+        $depNama = $dep['nama'] ?? 'Semua Departemen';
+        $blokNama = $blok['nama'] ?? 'Semua Blok';
+
+        // Fetch stations under this OSCE exam session
+        $stations = $this->db->table('osce_soal s')
+            ->select('s.*')
+            ->where('s.osce_id', $id)
+            ->orderBy('s.kode', 'asc')
+            ->get()->getResultArray();
+
+        // Fetch registered candidates
+        $candidates = $this->db->table('admin_cbt ac')
+            ->select('m.id, m.nim, m.nama, m.kelas')
+            ->join('mahasiswa m', 'm.id = ac.id_mahasiswa', 'left')
+            ->where('ac.kode', $uji['kode'])
+            ->orderBy('m.nama', 'asc')
+            ->get()->getResultArray();
+
+        $logoPath = FCPATH . 'assets/img/logo_unhas.png';
+        $logoData = '';
+        if (file_exists($logoPath)) {
+            $type = pathinfo($logoPath, PATHINFO_EXTENSION);
+            $data = file_get_contents($logoPath);
+            $logoData = 'data:image/' . $type . ';base64,' . base64_encode($data);
+        }
+
+        $html = '
+          <table width="100%" style="border-bottom:3px solid #000;margin-bottom:6px">
+            <tr>
+              <td width="80">
+                ' . ($logoData ? '<img src="' . $logoData . '" style="height:60px">' : '') . '
+              </td>
+              <td style="text-align:center;font-weight:bold;font-size:11pt">
+                KEMENTERIAN RISET, TEKNOLOGI, DAN PENDIDIKAN TINGGI<br>
+                UNIVERSITAS HASANUDDIN<br>
+                FAKULTAS KEDOKTERAN GIGI<br>
+                <div style="font-weight:normal;font-size:9pt">
+                  Jl. Perintis Kemerdekaan KM. 10 Makassar 90245 Tlp: (0411) 586012 Web: dent.unhas.ac.id
+                </div>
+              </td>
+            </tr>
+          </table>
+          <div style="text-align:center;font-weight:bold;margin:8px 0 12px 0;font-size:12pt">
+            LAPORAN HASIL UJIAN OSCE
+          </div>
+
+          <table width="100%" cellspacing="2" cellpadding="2" style="font-size:10pt;margin-bottom:14px;border:1px solid #ccc;padding:6px">
+            <tr>
+              <td style="width:16%;font-weight:bold">Ujian OSCE</td><td style="width:2%">:</td><td style="width:32%">' . esc($uji['nama_ujian'] ?? '-') . '</td>
+              <td style="width:18%;font-weight:bold">Departemen</td><td style="width:2%">:</td><td>' . esc($depNama) . '</td>
+            </tr>
+            <tr>
+              <td style="font-weight:bold">Kode Ujian</td><td>:</td><td>' . esc($uji['kode'] ?? '-') . '</td>
+              <td style="font-weight:bold">Blok</td><td>:</td><td>' . esc($blokNama) . '</td>
+            </tr>
+            <tr>
+              <td style="font-weight:bold">Tanggal</td><td>:</td><td>' . (function_exists('tgl_id') ? tgl_id($uji['tanggal']) : esc($uji['tanggal'] ?? '-')) . '</td>
+              <td style="font-weight:bold">Jlh. Peserta</td><td>:</td><td>' . count($candidates) . ' Mahasiswa</td>
+            </tr>
+          </table>';
+
+        if (empty($stations)) {
+            $html .= '<div style="text-align:center;padding:12px;font-style:italic">Belum ada station terdaftar untuk ujian ini.</div>';
+        } else {
+            foreach ($stations as $st) {
+                // Fetch answers for this station
+                $joRows = $this->db->table('jawaban_osce jo')
+                    ->select('jo.mahasiswa_id, jo.global_skor, jo.gps, jo.keterangan')
+                    ->select("
+                        CASE CAST(jo.gps AS UNSIGNED)
+                          WHEN 0 THEN 'Tidak Lulus'
+                          WHEN 1 THEN 'Borderline'
+                          WHEN 2 THEN 'Lulus'
+                          ELSE '-'
+                        END AS gps_text
+                    ", false)
+                    ->where('jo.osce_id', (int)$uji['id'])
+                    ->where('jo.soal_id', (int)$st['soal_id'])
+                    ->get()->getResultArray();
+
+                $scoreMap = [];
+                foreach ($joRows as $jr) {
+                    $scoreMap[$jr['mahasiswa_id']] = $jr;
+                }
+                $pengawasNama = trim((string)($st['nama_pengawas'] ?? '')) ?: ($st['nip_pengawas'] ?? '-');
+
+                $html .= '
+                <table width="100%" cellspacing="0" cellpadding="5" style="margin-top:14px;margin-bottom:6px;border:1px solid #cbd5e1;background:#f8fafc;font-size:9.5pt;border-left:4px solid #0EA5A5">
+                  <tr>
+                    <td style="width:50%;vertical-align:top;padding:6px 8px">
+                      <div style="font-weight:bold;color:#475569;font-size:8pt;text-transform:uppercase;margin-bottom:2px">Station</div>
+                      <div style="font-weight:bold;font-size:10pt;color:#0f172a">' . esc($st['nama_station']) . ' (' . esc($st['kode']) . ')</div>
+                    </td>
+                    <td style="width:50%;vertical-align:top;padding:6px 8px">
+                      <div style="font-weight:bold;color:#475569;font-size:8pt;text-transform:uppercase;margin-bottom:2px">Penguji</div>
+                      <div style="font-weight:bold;font-size:10pt;color:#0f172a">' . esc($pengawasNama) . '</div>
+                    </td>
+                  </tr>
+                </table>
+                <table width="100%" border="1" cellspacing="0" cellpadding="4" style="border-collapse:collapse;font-size:9.5pt;margin-bottom:12px">
+                  <thead>
+                    <tr style="background:#e9f2ff">
+                      <th style="width:30px;text-align:center">No</th>
+                      <th style="width:120px">NIM</th>
+                      <th>Nama Mahasiswa</th>
+                      <th style="width:80px;text-align:center">Global Skor</th>
+                      <th style="width:90px;text-align:center">GPS</th>
+                      <th style="width:140px">Keterangan</th>
+                    </tr>
+                  </thead>
+                  <tbody>';
+
+                if (empty($candidates)) {
+                    $html .= '<tr><td colspan="6" style="text-align:center;padding:8px">Belum ada peserta terdaftar.</td></tr>';
+                } else {
+                    $i = 1;
+                    foreach ($candidates as $cand) {
+                        $sc = $scoreMap[$cand['id']] ?? null;
+                        $skor = ($sc && !is_null($sc['global_skor'])) ? (float)$sc['global_skor'] : '-';
+                        $gpsTxt = $sc['gps_text'] ?? '-';
+                        $ket = $sc['keterangan'] ?? '-';
+
+                        $html .= '<tr>
+                          <td style="text-align:center">' . $i++ . '</td>
+                          <td>' . esc($cand['nim']) . '</td>
+                          <td>' . esc($cand['nama']) . '</td>
+                          <td style="text-align:center">' . $skor . '</td>
+                          <td style="text-align:center">' . esc($gpsTxt) . '</td>
+                          <td>' . esc($ket) . '</td>
+                        </tr>';
+                    }
+                }
+
+                $html .= '</tbody></table>';
+            }
+        }
+
+        while (ob_get_level() > 0) { ob_end_clean(); }
+
+        $opts = new \Dompdf\Options();
+        $opts->set('isRemoteEnabled', true);
+        $opts->set('isHtml5ParserEnabled', true);
+        $opts->set('defaultFont', 'DejaVu Sans');
+
+        $dompdf = new \Dompdf\Dompdf($opts);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->loadHtml(
+            '<style>
+               body{font-family:DejaVu Sans, Arial, sans-serif;font-size:10pt}
+             </style>' . $html
+        );
+        $dompdf->render();
+
+        return $this->response
+            ->setContentType('application/pdf')
+            ->setHeader('Cache-Control', 'private, max-age=0, must-revalidate')
+            ->setHeader('Pragma', 'public')
+            ->setBody($dompdf->output());
+    }
+
 
         // ===== FRAG: TABEL PESERTA =====
     public function pesertaTable(string $kode)
