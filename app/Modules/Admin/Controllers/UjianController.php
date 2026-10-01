@@ -1519,20 +1519,30 @@ class UjianController extends BaseController
             ];
         }
 
-        // 3) Gabungkan + flag has_attempt
+        // passing grade & total soal
+        $bt  = $db->table('buat_teori')->select('id, jumlah_soal, nilai_minimum')->where('kode', $kode)->get()->getRowArray() ?: [];
+        $min = (int)($bt['nilai_minimum'] ?? 0);
+        $totalSoal = (int)($bt['jumlah_soal'] ?? 0);
+        if ($totalSoal <= 0 && !empty($bt['id'])) {
+            $totalSoal = (int)$db->table('ujian_teori')->where('id_paket', $bt['id'])->countAllResults();
+        }
+        if ($totalSoal <= 0) {
+            $totalSoal = (int)$db->table('jawaban_teori')->where('kode', $kode)->select('soal_id')->distinct()->countAllResults();
+        }
+
+        // 3) Gabungkan + flag has_attempt + hitung nilai persentase
         foreach ($rows as &$r) {
             $att = $map[$r['no_ujian']] ?? null;
-            $r['has_attempt'] = $att !== null;      // << flag penting
+            $r['has_attempt'] = $att !== null;
             $r['benar']  = $att['benar']  ?? 0;
             $r['salah']  = $att['salah']  ?? 0;
             $r['kosong'] = $att['kosong'] ?? 0;
-            $r['nilai']  = $att['nilai']  ?? 0;
+            
+            $totJwb = $r['benar'] + $r['salah'] + $r['kosong'];
+            $nSoal  = $totalSoal > 0 ? $totalSoal : ($totJwb > 0 ? $totJwb : 1);
+            $r['nilai'] = $r['has_attempt'] ? (int)round(($r['benar'] / $nSoal) * 100) : 0;
         }
         unset($r);
-
-        // passing grade
-        $bt  = $db->table('buat_teori')->select('nilai_minimum')->where('kode', $kode)->get()->getRowArray() ?: [];
-        $min = (int)($bt['nilai_minimum'] ?? 0);
 
         return view('\Modules\Admin\Views\ujian\partials\peserta_table', [
             'kode' => $kode,

@@ -12,8 +12,8 @@
   <tbody>
   <?php if (!empty($rows)): foreach ($rows as $r):
     $hasAttempt = !empty($r['has_attempt']);
-    $benar      = (int)($r['benar'] ?? 0);
-    $isLow      = $hasAttempt && $min > 0 && $benar < $min;   // << hanya merah jika sudah attempt
+    $nilai      = (int)($r['nilai'] ?? 0);
+    $isLow      = $hasAttempt && $min > 0 && $nilai < $min;
   ?>
     <tr class="<?= $isLow ? 'row-red' : '' ?>">
       <td>
@@ -27,7 +27,10 @@
       <td><?= esc($r['kelas'] ?? '-') ?></td>
       <td>
         <?php if ($hasAttempt): ?>
-          <?= 'Benar = '.esc($benar).'<br>Salah = '.esc((int)$r['salah']).'<br>Kosong = '.esc((int)$r['kosong']) ?>
+          <span class="fw-bold <?= $isLow ? 'text-danger' : 'text-success' ?> fs-6"><?= esc($nilai) ?></span>
+          <small class="text-muted d-block" style="font-size:11px">
+            (Benar: <?= esc((int)($r['benar'] ?? 0)) ?>, Salah: <?= esc((int)($r['salah'] ?? 0)) ?>, Kosong: <?= esc((int)($r['kosong'] ?? 0)) ?>)
+          </small>
         <?php else: ?>
           <span class="text-muted">Belum mengerjakan</span>
         <?php endif; ?>

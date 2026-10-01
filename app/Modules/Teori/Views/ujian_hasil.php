@@ -24,9 +24,10 @@ body{background:#f6f7fb;color:var(--ink);font-family:Inter,system-ui,Segoe UI,Ro
 .stat .empty{background:#f8fafc;color:#334155}
 .stat .total{background:#eef2ff;color:#3730a3}
 .btn-brand{background:var(--brand);border-color:var(--brand);color:#fff}
-  .stat{display:grid;grid-template-columns:repeat(6,1fr);gap:12px} /* dari 4 -> 6 kolom */
+  .stat{display:grid;grid-template-columns:repeat(7,1fr);gap:12px}
   @media(max-width:768px){ .stat{grid-template-columns:repeat(2,1fr);} }
   .stat .pass{background:#fff7ed;color:#9a3412}   /* oranye lembut */
+  .stat .score{background:#e0f2fe;color:#0369a1}  /* biru muda */
   .stat .status-ok{background:#ecfdf5;color:#065f46}
   .stat .status-no{background:#fef2f2;color:#991b1b}
 </style>
@@ -81,6 +82,11 @@ body{background:#f6f7fb;color:var(--ink);font-family:Inter,system-ui,Segoe UI,Ro
     <h3><?= (int)$sum['total'] ?></h3>
   </div>
 
+  <div class="box score">
+    <div>Nilai</div>
+    <h3><?= (int)($nilai ?? 0) ?></h3>
+  </div>
+
   <!-- ⬇️ Passing Grade -->
   <div class="box pass">
     <div>Passing Grade</div>
@@ -98,11 +104,11 @@ body{background:#f6f7fb;color:var(--ink);font-family:Inter,system-ui,Segoe UI,Ro
 <!-- Info -->
 <?php if ($isLulus): ?>
   <div class="alert alert-success">
-    Selamat, Anda <strong>Lulus</strong>. Passing Grade: <?= (int)$min ?>, Jawaban Benar: <?= (int)$sum['benar'] ?>.
+    Selamat, Anda <strong>Lulus</strong>. Nilai: <strong><?= (int)($nilai ?? 0) ?></strong> (Passing Grade: <?= (int)$min ?>).
   </div>
 <?php else: ?>
   <div class="alert alert-danger">
-    Maaf, Anda <strong>Tidak Lulus</strong>. Passing Grade: <?= (int)$min ?>, Jawaban Benar: <?= (int)$sum['benar'] ?>.
+    Maaf, Anda <strong>Tidak Lulus</strong>. Nilai: <strong><?= (int)($nilai ?? 0) ?></strong> (Passing Grade: <?= (int)$min ?>).
   </div>
 <?php endif; ?>
 

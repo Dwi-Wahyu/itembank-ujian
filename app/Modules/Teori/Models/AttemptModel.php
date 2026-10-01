@@ -113,15 +113,23 @@ class AttemptModel extends Model
         }
     }
 
-     public function nilai(int $attemptId,int $benar,int $salah,int $kosong): void
+    public function nilai(int $attemptId, int $benar, int $salah, int $kosong, int $nilai = 0): void
     {
         $row = $this->find($attemptId);
-      
         if (!$row) return;
-          $this->update($attemptId, [
-            'benar'      => $benar,
-            'salah' => $salah,
-            'kosong' => $kosong
+
+        if ($nilai === 0) {
+            $tot = $benar + $salah + $kosong;
+            if ($tot > 0) {
+                $nilai = (int)round(($benar / $tot) * 100);
+            }
+        }
+
+        $this->update($attemptId, [
+            'benar'  => $benar,
+            'salah'  => $salah,
+            'kosong' => $kosong,
+            'nilai'  => $nilai,
         ]);
     }
       public function heartbeat(array $attempt, int $delta, ?string $reason=null, int $maxViol=3): array

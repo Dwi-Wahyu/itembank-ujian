@@ -39,8 +39,11 @@ class AnalisisUjianService
         // Ambil data soal
         $soalList = $this->getSoalAnalisis($ujianId, $uji['kode']);
 
+        // Ambil total soal untuk perhitungan persentase
+        $totalSoal = (int)($uji['jumlah_soal'] ?? 0);
+
         // Ambil rekap peserta
-        $pesertaList = $this->getPesertaList($uji['kode'], (int)($uji['nilai_minimum'] ?? 0));
+        $pesertaList = $this->getPesertaList($uji['kode'], (int)($uji['nilai_minimum'] ?? 0), $totalSoal);
 
         // Highlight soal
         $topBenar = $soalList;
@@ -82,6 +85,14 @@ class AnalisisUjianService
             ->where('ua.kode', $kode)
             ->get()->getResultArray();
 
+        $totalSoal = (int)($uji['jumlah_soal'] ?? 0);
+        if ($totalSoal <= 0) {
+            $totalSoal = (int)$this->db->table('ujian_teori')->where('id_paket', $ujianId)->countAllResults();
+        }
+        if ($totalSoal <= 0) {
+            $totalSoal = (int)$this->db->table('jawaban_teori')->where('kode', $kode)->select('soal_id')->distinct()->countAllResults();
+        }
+
         $scores = [];
         $totalLulus = 0;
         $totalSelesai = 0;
@@ -91,7 +102,12 @@ class AnalisisUjianService
                 $isDone = in_array($att['status'], ['finished', 'expired']) || (int)$att['benar'] > 0 || (int)$att['salah'] > 0;
                 if ($isDone) {
                     $totalSelesai++;
-                    $skor = (int)$att['benar'];
+                    $benar  = (int)$att['benar'];
+                    $salah  = (int)$att['salah'];
+                    $kosong = (int)$att['kosong'];
+                    $totJwb = $benar + $salah + $kosong;
+                    $nSoal  = $totalSoal > 0 ? $totalSoal : ($totJwb > 0 ? $totJwb : 1);
+                    $skor   = (int)round(($benar / $nSoal) * 100);
                     $scores[] = $skor;
                     if ($passingGrade > 0 && $skor >= $passingGrade) {
                         $totalLulus++;
@@ -102,9 +118,8 @@ class AnalisisUjianService
             // Fallback: hitung dari tabel jawaban_teori jika ujian_attempt kosong
             $jawabanMhs = $this->db->table('jawaban_teori jt')
                 ->select('jt.id_mahasiswa,
-                          SUM(CASE WHEN UPPER(TRIM(jt.jawaban)) = UPPER(TRIM(ut.kunci)) THEN 1 ELSE 0 END) AS benar,
-                          SUM(CASE WHEN UPPER(TRIM(jt.jawaban)) != UPPER(TRIM(ut.kunci)) AND jt.jawaban != "" THEN 1 ELSE 0 END) AS salah,
-                          SUM(CASE WHEN jt.jawaban IS NULL OR jt.jawaban = "" THEN 1 ELSE 0 END) AS kosong')
+                          COUNT(DISTINCT CASE WHEN UPPER(TRIM(jt.jawaban)) = UPPER(TRIM(ut.kunci)) THEN jt.soal_id END) AS benar,
+                          COUNT(DISTINCT CASE WHEN UPPER(TRIM(jt.jawaban)) != UPPER(TRIM(ut.kunci)) AND jt.jawaban != "" THEN jt.soal_id END) AS salah')
                 ->join('ujian_teori ut', 'ut.id = jt.soal_id')
                 ->where('jt.kode', $kode)
                 ->groupBy('jt.id_mahasiswa')
@@ -112,7 +127,10 @@ class AnalisisUjianService
 
             foreach ($jawabanMhs as $jm) {
                 $totalSelesai++;
-                $skor = (int)$jm['benar'];
+                $benar  = (int)$jm['benar'];
+                $salah  = (int)$jm['salah'];
+                $nSoal  = $totalSoal > 0 ? $totalSoal : 1;
+                $skor   = (int)round(($benar / $nSoal) * 100);
                 $scores[] = $skor;
                 if ($passingGrade > 0 && $skor >= $passingGrade) {
                     $totalLulus++;
@@ -313,10 +331,23 @@ class AnalisisUjianService
     }
 
     /**
-     * Ambil daftar peserta lengkap dengan nilai dan status.
+     * Ambil daftar peserta lengkap dengan nilai (persentase) dan status.
      */
-    protected function getPesertaList(string $kode, int $passingGrade): array
+    protected function getPesertaList(string $kode, int $passingGrade, int $totalSoal = 0): array
     {
+        if ($totalSoal <= 0) {
+            $bt = $this->db->table('buat_teori')->select('id, jumlah_soal')->where('kode', $kode)->get()->getRowArray();
+            if ($bt) {
+                $totalSoal = (int)($bt['jumlah_soal'] ?? 0);
+                if ($totalSoal <= 0) {
+                    $totalSoal = (int)$this->db->table('ujian_teori')->where('id_paket', $bt['id'])->countAllResults();
+                }
+            }
+            if ($totalSoal <= 0) {
+                $totalSoal = (int)$this->db->table('jawaban_teori')->where('kode', $kode)->select('soal_id')->distinct()->countAllResults();
+            }
+        }
+
         // 1. Ambil pendaftar dari admin_cbt
         $pendaftar = $this->db->table('admin_cbt p')
             ->select('p.no_ujian, p.id_mahasiswa, m.nama AS nama_mhs, m.nim, m.kelas')
@@ -333,6 +364,13 @@ class AnalisisUjianService
         $attemptMap = [];
         foreach ($attempts as $a) {
             $key = $a['id_mahasiswa'] ?: $a['no_ujian'];
+            $benar  = (int)($a['benar'] ?? 0);
+            $salah  = (int)($a['salah'] ?? 0);
+            $kosong = (int)($a['kosong'] ?? 0);
+            $totJwb = $benar + $salah + $kosong;
+            $nSoal  = $totalSoal > 0 ? $totalSoal : ($totJwb > 0 ? $totJwb : 1);
+            $skor   = (int)round(($benar / $nSoal) * 100);
+            $a['calculated_nilai'] = $skor;
             $attemptMap[$key] = $a;
         }
 
@@ -340,23 +378,29 @@ class AnalisisUjianService
         if (empty($attempts)) {
             $jawabanMhs = $this->db->table('jawaban_teori jt')
                 ->select('jt.id_mahasiswa,
-                          SUM(CASE WHEN UPPER(TRIM(jt.jawaban)) = UPPER(TRIM(ut.kunci)) THEN 1 ELSE 0 END) AS benar,
-                          SUM(CASE WHEN UPPER(TRIM(jt.jawaban)) != UPPER(TRIM(ut.kunci)) AND jt.jawaban != "" THEN 1 ELSE 0 END) AS salah,
-                          SUM(CASE WHEN jt.jawaban IS NULL OR jt.jawaban = "" THEN 1 ELSE 0 END) AS kosong')
+                          COUNT(DISTINCT CASE WHEN UPPER(TRIM(jt.jawaban)) = UPPER(TRIM(ut.kunci)) THEN jt.soal_id END) AS benar,
+                          COUNT(DISTINCT CASE WHEN UPPER(TRIM(jt.jawaban)) != UPPER(TRIM(ut.kunci)) AND jt.jawaban != "" THEN jt.soal_id END) AS salah')
                 ->join('ujian_teori ut', 'ut.id = jt.soal_id')
                 ->where('jt.kode', $kode)
                 ->groupBy('jt.id_mahasiswa')
                 ->get()->getResultArray();
 
             foreach ($jawabanMhs as $jm) {
+                $benar  = (int)$jm['benar'];
+                $salah  = (int)$jm['salah'];
+                $nSoal  = $totalSoal > 0 ? $totalSoal : 1;
+                $kosong = max(0, $nSoal - $benar - $salah);
+                $skor   = (int)round(($benar / $nSoal) * 100);
+
                 $attemptMap[$jm['id_mahasiswa']] = [
-                    'benar'       => (int)$jm['benar'],
-                    'salah'       => (int)$jm['salah'],
-                    'kosong'      => (int)$jm['kosong'],
-                    'nilai'       => (int)$jm['benar'],
-                    'status'      => 'finished',
-                    'start_at'    => null,
-                    'finished_at' => null,
+                    'benar'            => $benar,
+                    'salah'            => $salah,
+                    'kosong'           => $kosong,
+                    'nilai'            => $skor,
+                    'calculated_nilai' => $skor,
+                    'status'           => 'finished',
+                    'start_at'         => null,
+                    'finished_at'      => null,
                 ];
             }
         }
@@ -365,11 +409,14 @@ class AnalisisUjianService
         if (!empty($pendaftar)) {
             foreach ($pendaftar as $p) {
                 $att = $attemptMap[$p['id_mahasiswa']] ?? ($attemptMap[$p['no_ujian']] ?? null);
-                $benar  = (int)($att['benar'] ?? 0);
-                $salah  = (int)($att['salah'] ?? 0);
-                $kosong = (int)($att['kosong'] ?? 0);
+                $benar      = (int)($att['benar'] ?? 0);
+                $salah      = (int)($att['salah'] ?? 0);
+                $kosong     = (int)($att['kosong'] ?? 0);
                 $hasAttempt = $att !== null;
-                $isLulus = ($passingGrade > 0 && $benar >= $passingGrade);
+                $totJwb     = $benar + $salah + $kosong;
+                $nSoal      = $totalSoal > 0 ? $totalSoal : ($totJwb > 0 ? $totJwb : 1);
+                $skor       = $att['calculated_nilai'] ?? ($hasAttempt ? (int)round(($benar / $nSoal) * 100) : 0);
+                $isLulus    = ($hasAttempt && $passingGrade > 0 && $skor >= $passingGrade);
 
                 $result[] = [
                     'no_ujian'    => $p['no_ujian'],
@@ -380,17 +427,23 @@ class AnalisisUjianService
                     'benar'       => $benar,
                     'salah'       => $salah,
                     'kosong'      => $kosong,
-                    'nilai'       => $benar,
+                    'nilai'       => $skor,
                     'has_attempt' => $hasAttempt,
                     'status'      => $att['status'] ?? 'belum',
                     'lulus'       => $isLulus,
                 ];
             }
         } elseif (!empty($attemptMap)) {
-            // Jika admin_cbt kosong tapi ada attempt/jawaban
             foreach ($attemptMap as $mid => $att) {
                 $mhs = $this->db->table('mahasiswa')->select('nama, nim, kelas')->where('id', $mid)->get()->getRowArray();
-                $benar = (int)($att['benar'] ?? 0);
+                $benar  = (int)($att['benar'] ?? 0);
+                $salah  = (int)($att['salah'] ?? 0);
+                $kosong = (int)($att['kosong'] ?? 0);
+                $totJwb = $benar + $salah + $kosong;
+                $nSoal  = $totalSoal > 0 ? $totalSoal : ($totJwb > 0 ? $totJwb : 1);
+                $skor   = $att['calculated_nilai'] ?? (int)round(($benar / $nSoal) * 100);
+                $isLulus = ($passingGrade > 0 && $skor >= $passingGrade);
+
                 $result[] = [
                     'no_ujian'    => $att['no_ujian'] ?? '-',
                     'id_mahasiswa'=> $mid,
@@ -398,18 +451,18 @@ class AnalisisUjianService
                     'nim'         => $mhs['nim'] ?? '-',
                     'kelas'       => $mhs['kelas'] ?? '-',
                     'benar'       => $benar,
-                    'salah'       => (int)($att['salah'] ?? 0),
-                    'kosong'      => (int)($att['kosong'] ?? 0),
-                    'nilai'       => $benar,
+                    'salah'       => $salah,
+                    'kosong'      => $kosong,
+                    'nilai'       => $skor,
                     'has_attempt' => true,
                     'status'      => $att['status'] ?? 'finished',
-                    'lulus'       => ($passingGrade > 0 && $benar >= $passingGrade),
+                    'lulus'       => $isLulus,
                 ];
             }
         }
 
-        // Urutkan berdasarkan nilai tertinggi
-        usort($result, fn($a, $b) => ($b['benar'] <=> $a['benar']) ?: ($a['salah'] <=> $b['salah']));
+        // Urutkan berdasarkan nilai tertinggi (persentase)
+        usort($result, fn($a, $b) => ($b['nilai'] <=> $a['nilai']) ?: ($b['benar'] <=> $a['benar']));
 
         return $result;
     }
@@ -430,10 +483,10 @@ class AnalisisUjianService
             return array_map('intval', array_column($attempts, 'id_mahasiswa'));
         }
 
-        // Fallback dari jawaban_teori
+        // Fallback dari jawaban_teori (count distinct correct questions)
         $rows = $this->db->table('jawaban_teori jt')
             ->select('jt.id_mahasiswa,
-                      SUM(CASE WHEN UPPER(TRIM(jt.jawaban)) = UPPER(TRIM(ut.kunci)) THEN 1 ELSE 0 END) AS benar')
+                      COUNT(DISTINCT CASE WHEN UPPER(TRIM(jt.jawaban)) = UPPER(TRIM(ut.kunci)) THEN jt.soal_id END) AS benar')
             ->join('ujian_teori ut', 'ut.id = jt.soal_id')
             ->where('jt.kode', $kode)
             ->groupBy('jt.id_mahasiswa')

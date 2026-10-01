@@ -338,11 +338,20 @@ public function hasil($attemptId)
         (int)$attempt['id_paket']
     );
 
-    // ⬇️ Ambil passing grade dari tabel ujian (berdasarkan kode ujian)
+    // ⬇️ Ambil passing grade & jumlah soal dari tabel ujian
     $ujian = (new BuatTeoriModel())->where('kode', $attempt['kode'])->first();
   
-    $min   = (int)($ujian['nilai_minimum'] ?? 0);
-    $lulus = ((int)$sum['benar'] >= $min);
+    $min = (int)($ujian['nilai_minimum'] ?? 0);
+
+    $totalSoal = (int)($ujian['jumlah_soal'] ?? 0);
+    if ($totalSoal <= 0) {
+        $totalSoal = (int)(new UjianTeoriModel())->where('id_paket', $attempt['id_paket'])->countAllResults();
+    }
+    $totJwb = (int)$sum['benar'] + (int)$sum['salah'] + (int)$sum['kosong'];
+    $nSoal  = $totalSoal > 0 ? $totalSoal : ($totJwb > 0 ? $totJwb : 1);
+
+    $nilai = (int)round(((int)$sum['benar'] / $nSoal) * 100);
+    $lulus = ($min > 0 ? $nilai >= $min : true);
 
     $data = [
         'mhs'     => $mhs,
@@ -350,10 +359,11 @@ public function hasil($attemptId)
         'sum'     => $sum,
         'tanggal' => Time::parse($attempt['start_at'] ?? 'now')->toDateString(),
         'min'     => $min,
+        'nilai'   => $nilai,
         'lulus'   => $lulus,
     ];
 
-    (new AttemptModel())->nilai($attemptId, (int)$sum['benar'], (int)$sum['salah'], (int)$sum['kosong']);
+    (new AttemptModel())->nilai($attemptId, (int)$sum['benar'], (int)$sum['salah'], (int)$sum['kosong'], $nilai);
 
     return $this->response
         ->setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
