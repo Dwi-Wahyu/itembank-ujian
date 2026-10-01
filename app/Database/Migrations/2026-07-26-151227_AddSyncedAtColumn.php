@@ -8,13 +8,25 @@ class AddSyncedAtColumn extends Migration
 {
     public function up()
     {
-        $this->db->query("ALTER TABLE ujian_attempt ADD COLUMN synced_at DATETIME NULL");
-        $this->db->query("ALTER TABLE jawaban_osce ADD COLUMN synced_at DATETIME NULL");
+        if (!$this->db->fieldExists('synced_at', 'ujian_attempt')) {
+            $this->forge->addColumn('ujian_attempt', [
+                'synced_at' => ['type' => 'DATETIME', 'null' => true]
+            ]);
+        }
+        if (!$this->db->fieldExists('synced_at', 'jawaban_osce')) {
+            $this->forge->addColumn('jawaban_osce', [
+                'synced_at' => ['type' => 'DATETIME', 'null' => true]
+            ]);
+        }
     }
 
     public function down()
     {
-        $this->db->query("ALTER TABLE ujian_attempt DROP COLUMN synced_at");
-        $this->db->query("ALTER TABLE jawaban_osce DROP COLUMN synced_at");
+        if ($this->db->fieldExists('synced_at', 'ujian_attempt')) {
+            $this->forge->dropColumn('ujian_attempt', 'synced_at');
+        }
+        if ($this->db->fieldExists('synced_at', 'jawaban_osce')) {
+            $this->forge->dropColumn('jawaban_osce', 'synced_at');
+        }
     }
 }

@@ -6,6 +6,7 @@ use App\Controllers\BaseController;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Modules\Auth\Libraries\Auth;
+use Modules\Admin\Services\AnalisisUjianService;
 
 class UjianController extends BaseController
 {
@@ -61,6 +62,40 @@ class UjianController extends BaseController
             'dep'        => $dep['nama'] ?? 'Semua Departemen',
             'blok'       => $blok['nama'] ?? 'Semua Blok',
             'jumlah'     => $jml,
+        ]);
+    }
+
+    public function teoriAnalisis(int $id)
+    {
+        $force = (bool)$this->request->getGet('refresh');
+        $service = new AnalisisUjianService();
+        $data = $service->getOrCalculate($id, $force);
+
+        if (!$data) {
+            return redirect()->to(site_url('admin/ujian/teori'))->with('error', 'Data ujian tidak ditemukan');
+        }
+
+        $uji = $data['ujian'];
+        $dep = null;
+        if (!empty($uji['dapertemen_id'])) {
+            $dep = $this->db->table('departemen')->select('nama')->where('id', $uji['dapertemen_id'])->get()->getRowArray();
+        }
+        $blok = null;
+        if (!empty($uji['blok'])) {
+            $blok = $this->db->table('blok')->select('nama')->where('id', $uji['blok'])->get()->getRowArray();
+        }
+
+        return view('\Modules\Admin\Views\ujian\teori_analisis', [
+            'title'       => 'Analisis: ' . $uji['nama'],
+            'menuActive'  => 'ujian_teori',
+            'uji'         => $uji,
+            'dep'         => $dep['nama'] ?? 'Semua Departemen',
+            'blok'        => $blok['nama'] ?? 'Semua Blok',
+            'summary'     => $data['summary'],
+            'soalList'    => $data['soalList'],
+            'pesertaList' => $data['pesertaList'],
+            'topBenar'    => $data['topBenar'],
+            'topSalah'    => $data['topSalah'],
         ]);
     }
 

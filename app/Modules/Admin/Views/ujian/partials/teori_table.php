@@ -43,6 +43,11 @@ function qurl_part($p=[]){ return current_url().'?'.http_build_query(array_merge
                   </a>
                 </li>
                 <li>
+                  <a class="dropdown-item" title="Analisis" href="<?= site_url('admin/ujian/teori/analisis/'.$r['id']) ?>">
+                    <i class="bi bi-bar-chart-line me-2"></i> Analisis Ujian
+                  </a>
+                </li>
+                <li>
                   <a class="dropdown-item" title="Tugaskan Soal" href="<?= site_url('admin/ujian/teori/mass-assign-soal/'.$r['id']) ?>">
                     <i class="bi bi-journal-plus me-2"></i> Tugaskan Soal
                   </a>
